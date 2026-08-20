@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { LOGO_URL, AVATAR_URL, CLASSROOM_BG_URL } from '../data/mockData';
+import { AVATAR_URL, CLASSROOM_BG_URL } from '../data/mockData';
 import { Lecture, StudentProfile } from '../types';
 
 interface StudentVerificationProps {
@@ -17,21 +17,27 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
   onVerificationComplete,
 }) => {
   const [locationVerified, setLocationVerified] = useState(false);
-  const [deviceTrusted] = useState(true);
-  const [scanState, setScanState] = useState<'scanning' | 'processing' | 'success' | 'failed'>('scanning');
-  const [dynamicChallengeCode, setDynamicChallengeCode] = useState('SA-8924-TOKEN');
+  const [scanState, setScanState] = useState<'scanning' | 'processing' | 'success' | 'expired'>('scanning');
+  const [dynamicChallengeCode, setDynamicChallengeCode] = useState('SA-5S-8924');
+  const [tokenCountdown, setTokenCountdown] = useState(5);
 
   useEffect(() => {
-    // Simulate location lock after 1.2 seconds
+    // Simulate location lock after 1 second
     const locTimer = setTimeout(() => {
       setLocationVerified(true);
     }, 1000);
 
-    // Dynamic challenge rotation every 10s
+    // 5-Second QR Challenge Nonce Rotation
     const tokenInterval = setInterval(() => {
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      setDynamicChallengeCode(`SA-${rand}-TOKEN`);
-    }, 10000);
+      setTokenCountdown((prev) => {
+        if (prev <= 1) {
+          const rand = Math.floor(1000 + Math.random() * 9000);
+          setDynamicChallengeCode(`SA-5S-${rand}`);
+          return 5;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     return () => {
       clearTimeout(locTimer);
@@ -55,7 +61,16 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
       setTimeout(() => {
         onVerificationComplete(lecture);
       }, 2000);
-    }, 1200);
+    }, 1000);
+  };
+
+  const triggerExpiredScan = () => {
+    if (scanState !== 'scanning') return;
+    setScanState('processing');
+
+    setTimeout(() => {
+      setScanState('expired');
+    }, 800);
   };
 
   return (
@@ -88,7 +103,57 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
 
       {/* Main Verification View */}
       <main className="w-full max-w-md mx-auto flex-1 flex flex-col justify-between pt-4 pb-8 px-4">
-        {scanState === 'success' ? (
+        {scanState === 'expired' ? (
+          /* Expired QR Error Screen */
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-20 h-20 rounded-full bg-[#ffdad6] text-[#ba1a1a] flex items-center justify-center shadow-md">
+              <span className="material-symbols-outlined text-[44px]">timer_off</span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12px] font-bold text-[#ba1a1a] uppercase tracking-wider bg-[#ffdad6]/60 px-3 py-1 rounded-full w-fit mx-auto">
+                Security Challenge Timeout
+              </span>
+              <h2 className="text-[22px] font-extrabold text-[#ba1a1a] mt-1 flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-[24px]">warning</span>
+                <span>QR Code Expired</span>
+              </h2>
+              <p className="text-[13px] text-[#44474e] max-w-xs leading-relaxed">
+                This QR code is no longer valid. Please scan the current QR displayed by your teacher.
+              </p>
+            </div>
+
+            <div className="w-full bg-white rounded-2xl p-4 border border-[#ffdad6] text-left text-[12px] flex flex-col gap-2 mt-2 shadow-xs">
+              <div className="flex justify-between text-[#44474e]">
+                <span>Expired Token Nonce:</span>
+                <span className="font-mono font-bold text-[#ba1a1a]">SA-5S-EXPIRED</span>
+              </div>
+              <div className="flex justify-between text-[#44474e]">
+                <span>Rotation Policy:</span>
+                <span className="font-bold text-[#031635]">5-Second Real-Time Expiry</span>
+              </div>
+              <div className="text-[11px] text-[#75777f] border-t border-[#f3f4f5] pt-2">
+                Screenshots or forwarding are blocked to maintain attendance integrity.
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col gap-2.5 mt-4">
+              <button
+                onClick={() => setScanState('scanning')}
+                className="w-full bg-[#031635] text-white hover:bg-[#1a2b4b] py-3.5 px-4 rounded-2xl font-bold text-[14px] transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+                <span>Scan Current QR</span>
+              </button>
+              <button
+                onClick={onAbort}
+                className="w-full bg-white border border-[#e1e3e4] text-[#75777f] hover:bg-[#f8f9fa] py-3 px-4 rounded-2xl font-bold text-[13px] transition-all cursor-pointer"
+              >
+                Cancel & Return
+              </button>
+            </div>
+          </div>
+        ) : scanState === 'success' ? (
           /* Success Screen */
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 animate-in fade-in zoom-in-95 duration-300">
             <div className="w-20 h-20 rounded-full bg-[#a0f399] text-[#005312] flex items-center justify-center shadow-lg animate-bounce">
@@ -97,13 +162,13 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
 
             <div className="flex flex-col gap-1">
               <span className="text-[12px] font-bold text-[#1b6d24] uppercase tracking-wider bg-[#d8e2ff]/50 px-3 py-1 rounded-full w-fit mx-auto">
-                Attendance Recorded
+                ✓ QR Verified
               </span>
               <h2 className="text-[24px] font-extrabold text-[#031635] mt-1">
-                Verified Successfully!
+                Attendance Recorded!
               </h2>
               <p className="text-[13px] text-[#44474e] max-w-xs">
-                Your presence for <strong className="text-[#031635]">{lecture.name}</strong> ({lecture.code}) has been cryptographically signed and logged.
+                Your presence for <strong className="text-[#031635]">{lecture.name}</strong> ({lecture.code}) has been verified and logged.
               </p>
             </div>
 
@@ -114,7 +179,11 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
                 <span className="font-bold text-[#191c1d]">Just now (10:02 AM)</span>
               </div>
               <div className="flex justify-between text-[#44474e]">
-                <span>Location Accuracy:</span>
+                <span>Dynamic Challenge:</span>
+                <span className="font-bold text-[#1b6d24]">Valid (5s Window)</span>
+              </div>
+              <div className="flex justify-between text-[#44474e]">
+                <span>Location Distance:</span>
                 <span className="font-bold text-[#1b6d24]">6.2m from Instructor Pod</span>
               </div>
               <div className="flex justify-between text-[#44474e]">
@@ -175,22 +244,27 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
                 {/* Center token instruction */}
                 <div className="bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white text-[11px] font-bold tracking-wide shadow-md flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#a0f399] animate-pulse" />
-                  <span>Align Room Projector QR</span>
+                  <span>Align Dynamic QR</span>
                 </div>
               </div>
 
               {/* Dynamic rotating challenge token watermark */}
-              <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-md px-3 py-1 rounded-xl">
-                <span>CHALLENGE: {dynamicChallengeCode}</span>
-                <span className="text-[#a0f399] font-bold">10s TTL</span>
+              <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl">
+                <span>DYNAMIC CHALLENGE: {dynamicChallengeCode}</span>
+                <span className="text-[#a0f399] font-bold">Expires in {tokenCountdown}s</span>
               </div>
             </div>
 
             {/* Multi-Factor Verification Checklist */}
             <div className="bg-white rounded-2xl p-4 border border-[#e1e3e4] shadow-xs flex flex-col gap-2.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#75777f]">
-                Security Factor Attestation
-              </span>
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#75777f]">
+                  Security Factor Attestation
+                </span>
+                <span className="text-[11px] font-bold text-[#005312] bg-[#a0f399] px-2 py-0.5 rounded-full">
+                  5s Dynamic Challenge
+                </span>
+              </div>
 
               <div className="flex flex-col gap-2">
                 {/* 1. Location Factor */}
@@ -236,24 +310,36 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
               </div>
             </div>
 
-            {/* Action Button to simulate/execute verification */}
-            <button
-              onClick={triggerScanSuccess}
-              disabled={scanState === 'processing'}
-              className="w-full bg-[#031635] text-white hover:bg-[#1a2b4b] active:scale-[0.98] py-3.5 px-4 rounded-2xl font-bold text-[14px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 mt-1"
-            >
-              {scanState === 'processing' ? (
-                <>
-                  <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
-                  <span>Verifying Cryptographic Nonce...</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                  <span>Simulate Capture & Verify Attendance</span>
-                </>
-              )}
-            </button>
+            {/* Action Buttons to test scan scenarios */}
+            <div className="flex flex-col gap-2 mt-1">
+              <button
+                onClick={triggerScanSuccess}
+                disabled={scanState === 'processing'}
+                className="w-full bg-[#031635] text-white hover:bg-[#1a2b4b] active:scale-[0.98] py-3.5 px-4 rounded-2xl font-bold text-[14px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+              >
+                {scanState === 'processing' ? (
+                  <>
+                    <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
+                    <span>Verifying 5s Dynamic Nonce...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+                    <span>Scan Live Dynamic QR</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={triggerExpiredScan}
+                disabled={scanState === 'processing'}
+                className="w-full bg-[#fff8f6] border border-[#ffdad6] text-[#ba1a1a] hover:bg-[#ffdad6]/60 py-2.5 px-4 rounded-2xl font-bold text-[12px] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                title="Simulate scanning a stale or screenshot QR code"
+              >
+                <span className="material-symbols-outlined text-[16px]">history_toggle_off</span>
+                <span>Simulate Expired QR Scan (Test Expiry Guard)</span>
+              </button>
+            </div>
           </div>
         )}
       </main>

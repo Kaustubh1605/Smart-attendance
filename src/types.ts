@@ -40,6 +40,12 @@ export interface Lecture {
   timeSlot: string;
   duration: string;
   status: 'active' | 'upcoming' | 'completed';
+  className?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  attendanceCount?: number;
+  isArchived?: boolean;
   geofence: {
     lat: number;
     lng: number;

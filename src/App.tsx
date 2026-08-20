@@ -94,6 +94,94 @@ export default function App() {
     setAuditLogs((prev) => [auditEntry, ...prev]);
   };
 
+  const handleUpdateLecture = (updatedLecture: Lecture) => {
+    const oldLecture = lectures.find((l) => l.id === updatedLecture.id);
+    setLectures((prev) => prev.map((l) => (l.id === updatedLecture.id ? updatedLecture : l)));
+
+    const auditEntry: AuditLogEntry = {
+      id: generateUniqueId('aud'),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      actor: 'prof.sharma@springfield.edu',
+      role: 'TEACHER',
+      action: 'LECTURE_DETAILS_UPDATED',
+      entity: 'Lecture',
+      entityId: updatedLecture.id,
+      previousState: oldLecture ? `${oldLecture.timeSlot} (${oldLecture.room})` : 'ORIGINAL_SCHEDULE',
+      newState: `${updatedLecture.timeSlot} (${updatedLecture.room})`,
+      reason: `Faculty updated timing & venue details for ${updatedLecture.name}`,
+      ipAddress: '10.0.1.15'
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
+  };
+
+  const handleDeleteLecture = (lectureId: string, isArchive = false) => {
+    const targetLecture = lectures.find((l) => l.id === lectureId);
+    if (!targetLecture) return;
+
+    if (isArchive) {
+      setLectures((prev) =>
+        prev.map((l) => (l.id === lectureId ? { ...l, isArchived: true, status: 'completed' } : l))
+      );
+      const auditEntry: AuditLogEntry = {
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'prof.sharma@springfield.edu',
+        role: 'TEACHER',
+        action: 'LECTURE_ARCHIVED',
+        entity: 'Lecture',
+        entityId: lectureId,
+        previousState: 'COMPLETED_SCHEDULE',
+        newState: 'ARCHIVED (Attendance Preserved)',
+        reason: `Faculty archived completed lecture ${targetLecture.name}; records preserved`,
+        ipAddress: '10.0.1.15'
+      };
+      setAuditLogs((prev) => [auditEntry, ...prev]);
+    } else {
+      setLectures((prev) => prev.filter((l) => l.id !== lectureId));
+      if (activeLectureId === lectureId) {
+        const remaining = lectures.filter((l) => l.id !== lectureId);
+        if (remaining.length > 0) {
+          setActiveLectureId(remaining[0].id);
+        }
+      }
+      const auditEntry: AuditLogEntry = {
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'prof.sharma@springfield.edu',
+        role: 'TEACHER',
+        action: 'LECTURE_DELETED',
+        entity: 'Lecture',
+        entityId: lectureId,
+        previousState: 'UPCOMING_SCHEDULED',
+        newState: 'DELETED',
+        reason: `Faculty deleted scheduled lecture ${targetLecture.name}`,
+        ipAddress: '10.0.1.15'
+      };
+      setAuditLogs((prev) => [auditEntry, ...prev]);
+    }
+  };
+
+  const handleEndAttendance = (lectureId: string) => {
+    const targetLecture = lectures.find((l) => l.id === lectureId);
+    setLectures((prev) =>
+      prev.map((l) => (l.id === lectureId ? { ...l, status: 'completed' } : l))
+    );
+    const auditEntry: AuditLogEntry = {
+      id: generateUniqueId('aud'),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      actor: 'prof.sharma@springfield.edu',
+      role: 'TEACHER',
+      action: 'ATTENDANCE_SESSION_FINALIZED',
+      entity: 'Lecture',
+      entityId: lectureId,
+      previousState: 'ACTIVE_INGEST',
+      newState: 'FINALIZED',
+      reason: `Faculty closed live attendance window for ${targetLecture?.name || lectureId}`,
+      ipAddress: '10.0.1.15'
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
+  };
+
   const handleLogoutRole = (role: UserRole) => {
     if (role === 'student') setIsStudentLoggedIn(false);
     if (role === 'teacher') setIsTeacherLoggedIn(false);
@@ -351,6 +439,9 @@ export default function App() {
               currentLecture={activeLecture}
               onSelectLecture={handleSelectLecture}
               onCreateLecture={handleCreateLecture}
+              onUpdateLecture={handleUpdateLecture}
+              onDeleteLecture={handleDeleteLecture}
+              onEndAttendance={handleEndAttendance}
               students={classStudents}
               onUpdateStudentStatus={handleTeacherOverride}
               onNavigateHome={() => setCurrentRole('student')}
