@@ -1,0 +1,6 @@
+{
+  "name": "SmartAttend",
+  "description": "Production-grade multi-factor attendance verification platform with student portal, live faculty dashboard, local network offline attendance mesh, and administrative auditing.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
