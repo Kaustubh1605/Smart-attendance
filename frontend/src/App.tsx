@@ -28,8 +28,13 @@ import { CorrectionModal } from './components/CorrectionModal';
 import { DeviceRecoveryModal } from './components/DeviceRecoveryModal';
 
 export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Global View / Role State
-  const [currentRole, setCurrentRole] = useState<UserRole>('student');
+  let currentRole: UserRole = 'student';
+  if (location.pathname.startsWith('/teacher')) currentRole = 'teacher';
+  if (location.pathname.startsWith('/admin')) currentRole = 'admin';
   const [isPhoneFrame, setIsPhoneFrame] = useState<boolean>(false);
 
   // Separate Role Authentication States
@@ -425,11 +430,11 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f3f4f5] text-[#191c1d] w-full max-w-full overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#f3f4f5] text-[#191c1d] w-full max-w-full">
       {/* Top Navbar Switcher */}
       <Navbar
         currentRole={currentRole}
-        onChangeRole={setCurrentRole}
+        onChangeRole={(role) => navigate(`/${role}`)}
         isPhoneFrame={isPhoneFrame}
         onTogglePhoneFrame={() => setIsPhoneFrame(!isPhoneFrame)}
         isStudentLoggedIn={isStudentLoggedIn}
@@ -438,7 +443,7 @@ export default function App() {
       />
 
       {/* Main Viewport */}
-      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-full overflow-x-hidden">
+      <div className="flex-1 flex flex-col items-center justify-start w-full max-w-full">
                 <Routes>
           <Route path="/" element={<Navigate to="/student" />} />
           <Route path="/student/*" element={
