@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -50,9 +49,6 @@ model StudentProfile {
   studentId                   String    @unique
   program                     String
   batch                       String
-  overallAttendancePercentage Float     @default(0)
-  currentStreak               Int       @default(0)
-  weeklyDelta                 Float     @default(0)
   
   // Device Binding
   deviceName                  String?

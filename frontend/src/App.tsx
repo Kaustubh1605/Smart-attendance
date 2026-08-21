@@ -20,17 +20,10 @@ import {
   QRVerificationResult,
 } from './types';
 import { Navbar } from './components/Navbar';
-import { BottomNav } from './components/BottomNav';
-import { StudentHome } from './components/StudentHome';
-import { StudentLogin } from './components/StudentLogin';
-import { TeacherLogin } from './components/TeacherLogin';
-import { AdminLogin } from './components/AdminLogin';
-import { StudentVerification } from './components/StudentVerification';
-import { StudentHistory } from './components/StudentHistory';
-import { StudentProfileView } from './components/StudentProfile';
-import { StudentStudyMaterials } from './components/StudentStudyMaterials';
-import { TeacherDashboard } from './components/TeacherDashboard';
-import { AdminPortal } from './components/AdminPortal';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { StudentPortal } from './pages/StudentPortal';
+import { TeacherPortal } from './pages/TeacherPortal';
+import { AdminPortalPage } from './pages/AdminPortalPage';
 import { CorrectionModal } from './components/CorrectionModal';
 import { DeviceRecoveryModal } from './components/DeviceRecoveryModal';
 
@@ -446,140 +439,60 @@ export default function App() {
 
       {/* Main Viewport */}
       <div className="flex-1 flex flex-col items-center justify-start w-full max-w-full overflow-x-hidden">
-        {/* VIEW 1: STUDENT MOBILE APP */}
-        {currentRole === 'student' && (
-          <div
-            className={`w-full transition-all duration-300 ${
-              isPhoneFrame
-                ? 'max-w-[430px] my-6 border-8 border-[#191c1d] rounded-[48px] shadow-2xl overflow-hidden min-h-[880px] bg-[#f3f4f5] relative ring-1 ring-black/10'
-                : 'w-full'
-            }`}
-          >
-            {/* If Student is Logged Out -> Show Student Login Screen */}
-            {!isStudentLoggedIn ? (
-              <StudentLogin
-                onLoginSuccess={() => setIsStudentLoggedIn(true)}
-                onOpenRecovery={() => setShowDeviceRecovery(true)}
-                onSwitchToAdmin={() => setCurrentRole('admin')}
-                onSwitchToTeacher={() => setCurrentRole('teacher')}
-              />
-            ) : isVerifying ? (
-              /* If Student is in Active Verification mode */
-              <StudentVerification
-                student={studentData}
-                lecture={activeLecture}
-                onAbort={() => setIsVerifying(false)}
-                onVerificationComplete={handleVerificationComplete}
-              />
-            ) : (
-              /* If Student is navigating standard tabs */
-              <>
-                {studentTab === 'home' && (
-                  <StudentHome
-                    student={studentData}
-                    activeLecture={activeLecture}
-                    upcomingLectures={upcomingLectures}
-                    attendanceHistory={attendanceHistory}
-                    onStartVerification={() => setIsVerifying(true)}
-                    onNavigateHistory={() => setStudentTab('history')}
-                    onNavigateMaterials={(subjectCode?: string) => {
-                      setSelectedMaterialSubject(subjectCode || null);
-                      setStudentTab('materials');
-                    }}
-                    onNavigateProfile={() => setStudentTab('profile')}
-                    onRequestCorrection={(rec) => setCorrectionTargetRecord(rec)}
-                  />
-                )}
-
-                {studentTab === 'history' && (
-                  <StudentHistory
-                    student={studentData}
-                    records={attendanceHistory}
-                    onRequestCorrection={(rec) => setCorrectionTargetRecord(rec)}
-                    onNavigateHome={() => setStudentTab('home')}
-                    onNavigateProfile={() => setStudentTab('profile')}
-                  />
-                )}
-
-                {studentTab === 'materials' && (
-                  <StudentStudyMaterials
-                    student={studentData}
-                    materials={studyMaterials}
-                    initialSubjectCode={selectedMaterialSubject || undefined}
-                    onNavigateHome={() => setStudentTab('home')}
-                    onNavigateHistory={() => setStudentTab('history')}
-                    onNavigateProfile={() => setStudentTab('profile')}
-                    onBack={() => setStudentTab('home')}
-                  />
-                )}
-
-                {studentTab === 'profile' && (
-                  <StudentProfileView
-                    student={studentData}
-                    onLogout={() => setIsStudentLoggedIn(false)}
-                    onOpenDeviceRecovery={() => setShowDeviceRecovery(true)}
-                  />
-                )}
-
-                {/* Mobile Bottom Navigation Bar */}
-                <BottomNav
-                  currentTab={studentTab}
-                  onSelectTab={(tab) => {
-                    setSelectedMaterialSubject(null);
-                    setStudentTab(tab);
-                  }}
-                />
-              </>
-            )}
-          </div>
-        )}
-
-        {/* VIEW 2: TEACHER LIVE DASHBOARD / LOGIN */}
-        {currentRole === 'teacher' && (
-          !isTeacherLoggedIn ? (
-            <TeacherLogin
-              onLoginSuccess={() => setIsTeacherLoggedIn(true)}
-              onSwitchToStudent={() => setCurrentRole('student')}
-              onSwitchToAdmin={() => setCurrentRole('admin')}
-            />
-          ) : (
-            <TeacherDashboard
-              lectures={lectures}
-              currentLecture={activeLecture}
-              onSelectLecture={handleSelectLecture}
-              onCreateLecture={handleCreateLecture}
-              onUpdateLecture={handleUpdateLecture}
-              onDeleteLecture={handleDeleteLecture}
-              onEndAttendance={handleEndAttendance}
-              students={classStudents}
-              onUpdateStudentStatus={handleTeacherOverride}
-              onNavigateHome={() => setCurrentRole('student')}
-              onLogout={() => setIsTeacherLoggedIn(false)}
+                <Routes>
+          <Route path="/" element={<Navigate to="/student" />} />
+          <Route path="/student/*" element={
+            <StudentPortal
+              isPhoneFrame={isPhoneFrame}
+              isStudentLoggedIn={isStudentLoggedIn}
+              setIsStudentLoggedIn={setIsStudentLoggedIn}
+              studentData={studentData}
+              activeLecture={activeLecture}
+              upcomingLectures={upcomingLectures}
+              attendanceHistory={attendanceHistory}
               studyMaterials={studyMaterials}
-              onAddStudyMaterial={handleAddStudyMaterial}
-              onUpdateStudyMaterial={handleUpdateStudyMaterial}
-              onDeleteStudyMaterial={handleDeleteStudyMaterial}
+              selectedMaterialSubject={selectedMaterialSubject}
+              setSelectedMaterialSubject={setSelectedMaterialSubject}
+              correctionTargetRecord={correctionTargetRecord}
+              setCorrectionTargetRecord={setCorrectionTargetRecord}
+              showDeviceRecovery={showDeviceRecovery}
+              setShowDeviceRecovery={setShowDeviceRecovery}
+              handleVerificationComplete={handleVerificationComplete}
+              handleSubmitCorrection={handleSubmitCorrection}
+              handleConfirmNewDevice={handleConfirmNewDevice}
+              isVerifying={isVerifying}
+              setIsVerifying={setIsVerifying}
             />
-          )
-        )}
-
-        {/* VIEW 3: INSTITUTIONAL OPERATIONS & AUDIT / ADMIN LOGIN */}
-        {currentRole === 'admin' && (
-          !isAdminLoggedIn ? (
-            <AdminLogin
-              onLoginSuccess={() => setIsAdminLoggedIn(true)}
-              onSwitchToStudent={() => setCurrentRole('student')}
-              onSwitchToTeacher={() => setCurrentRole('teacher')}
+          } />
+          <Route path="/teacher/*" element={
+            <TeacherPortal
+              isTeacherLoggedIn={isTeacherLoggedIn}
+              setIsTeacherLoggedIn={setIsTeacherLoggedIn}
+              lectures={lectures}
+              activeLecture={activeLecture}
+              handleSelectLecture={handleSelectLecture}
+              handleCreateLecture={handleCreateLecture}
+              handleUpdateLecture={handleUpdateLecture}
+              handleDeleteLecture={handleDeleteLecture}
+              handleEndAttendance={handleEndAttendance}
+              classStudents={classStudents}
+              handleTeacherOverride={handleTeacherOverride}
+              studyMaterials={studyMaterials}
+              handleAddStudyMaterial={handleAddStudyMaterial}
+              handleUpdateStudyMaterial={handleUpdateStudyMaterial}
+              handleDeleteStudyMaterial={handleDeleteStudyMaterial}
             />
-          ) : (
-            <AdminPortal
+          } />
+          <Route path="/admin/*" element={
+            <AdminPortalPage
+              isAdminLoggedIn={isAdminLoggedIn}
+              setIsAdminLoggedIn={setIsAdminLoggedIn}
               auditLogs={auditLogs}
               lectures={lectures}
-              onAddAuditLog={(log) => setAuditLogs((prev) => [log, ...prev])}
-              onLogout={() => setIsAdminLoggedIn(false)}
+              setAuditLogs={setAuditLogs}
             />
-          )
-        )}
+          } />
+        </Routes>
       </div>
 
       {/* Global Modals */}
