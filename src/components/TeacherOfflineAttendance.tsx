@@ -882,22 +882,22 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
             <div className="flex flex-col items-center gap-4 py-2 w-full">
               <div className="relative p-6 bg-white border-4 border-[#031635] rounded-3xl shadow-xl flex flex-col items-center justify-center">
                 {/* SVG Mock of high-density cryptographic QR */}
-                <div className="w-64 h-64 bg-[#f8f9fa] rounded-2xl flex flex-col items-center justify-center p-3 relative border border-[#e1e3e4]">
+                <div className="w-96 h-96 bg-[#f8f9fa] rounded-2xl flex flex-col items-center justify-center p-4 relative border border-[#e1e3e4]">
                   {/* Outer Frame Corners */}
-                  <div className="w-full h-full border-4 border-[#031635] rounded-xl p-2 flex flex-col justify-between">
+                  <div className="w-full h-full border-4 border-[#031635] rounded-xl p-3 flex flex-col justify-between">
                     <div className="flex justify-between">
-                      <div className="w-10 h-10 bg-[#031635] rounded-md p-1.5 flex items-center justify-center">
-                        <div className="w-5 h-5 bg-white rounded-xs" />
+                      <div className="w-12 h-12 bg-[#031635] rounded-md p-1.5 flex items-center justify-center">
+                        <div className="w-6 h-6 bg-white rounded-xs" />
                       </div>
-                      <div className="w-10 h-10 bg-[#031635] rounded-md p-1.5 flex items-center justify-center">
-                        <div className="w-5 h-5 bg-white rounded-xs" />
+                      <div className="w-12 h-12 bg-[#031635] rounded-md p-1.5 flex items-center justify-center">
+                        <div className="w-6 h-6 bg-white rounded-xs" />
                       </div>
                     </div>
 
                     {/* Center rotating nonce glyph */}
-                    <div className="flex flex-col items-center justify-center gap-1">
-                      <span className="material-symbols-outlined text-[36px] text-[#031635]">qr_code_2</span>
-                      <span className="font-mono text-[10px] font-bold text-[#031635] bg-white px-2 py-0.5 rounded border border-[#e1e3e4]">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-[#031635]" style={{ fontSize: '100px' }}>qr_code_2</span>
+                      <span className="font-mono text-[14px] font-bold text-[#031635] bg-white px-3 py-1 rounded border border-[#e1e3e4]">
                         {qrToken}
                       </span>
                     </div>

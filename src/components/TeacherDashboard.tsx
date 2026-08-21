@@ -773,12 +773,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   </button>
                 </div>
 
-                <div className="flex items-center gap-4 my-3 bg-white/5 p-3 rounded-2xl border border-white/10">
+                <div className="flex items-center gap-5 my-3 bg-white/5 p-4 rounded-2xl border border-white/10">
                   <div
                     onClick={() => setShowProjectorQR(true)}
-                    className="w-16 h-16 bg-white rounded-xl p-1 flex items-center justify-center text-[#031635] cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-md"
+                    className="w-32 h-32 bg-white rounded-xl p-1 flex items-center justify-center text-[#031635] cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-md"
                   >
-                    <span className="material-symbols-outlined text-[54px] select-none text-[#031635]">qr_code_2</span>
+                    <span className="material-symbols-outlined select-none text-[#031635]" style={{ fontSize: '100px' }}>qr_code_2</span>
                   </div>
                   <div className="flex flex-col flex-1">
                     <span className="font-mono font-bold text-white text-[13px]">{qrToken}</span>
@@ -1898,9 +1898,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
 
             {/* Large Projector QR Display */}
-            <div className="p-6 bg-white rounded-3xl shadow-2xl flex flex-col items-center gap-4 relative w-full max-w-sm">
-              <div className="w-64 h-64 sm:w-72 sm:h-72 bg-[#031635] rounded-2xl flex items-center justify-center text-white relative overflow-hidden p-4">
-                <span className="material-symbols-outlined text-[190px] sm:text-[220px] text-white select-none">
+            <div className="p-8 bg-white rounded-3xl shadow-2xl flex flex-col items-center gap-6 relative w-full max-w-xl">
+              <div className="w-80 h-80 sm:w-96 sm:h-96 bg-[#031635] rounded-2xl flex items-center justify-center text-white relative overflow-hidden p-4">
+                <span className="material-symbols-outlined text-white select-none" style={{ fontSize: '320px' }}>
                   qr_code_2
                 </span>
               </div>
