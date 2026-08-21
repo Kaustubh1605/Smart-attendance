@@ -34,7 +34,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onLogout,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'dashboard' | 'students' | 'teachers' | 'classes' | 'classrooms' | 'timetable' | 'devices' | 'analytics' | 'audit' | 'settings'
+    'dashboard' | 'registrations' | 'students' | 'teachers' | 'classes' | 'classrooms' | 'timetable' | 'devices' | 'analytics' | 'audit' | 'settings'
   >('dashboard');
 
   // State for data management
@@ -43,6 +43,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [classrooms, setClassrooms] = useState<ClassroomItem[]>(MOCK_CLASSROOMS);
   const [timetable, setTimetable] = useState<TimetableSlot[]>(MOCK_TIMETABLE);
   const [settings, setSettings] = useState<InstitutionSettings>(MOCK_INSTITUTION_SETTINGS);
+
+  const [pendingUsers, setPendingUsers] = useState([
+    { id: '1', name: 'Alice Smith', email: 'alice.smith@university.edu', role: 'STUDENT', status: 'PENDING', createdAt: '2026-08-21T10:00:00Z' },
+    { id: '2', name: 'Bob Johnson', email: 'bob.j@university.edu', role: 'TEACHER', status: 'PENDING', createdAt: '2026-08-21T11:30:00Z' }
+  ]);
 
   // Filters & Searches
   const [searchStudent, setSearchStudent] = useState('');
@@ -155,6 +160,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       })
     );
     showToast('Faculty status updated');
+  };
+
+  const handleApproveUser = (id: string) => {
+    setPendingUsers(prev => prev.filter(u => u.id !== id));
+    showToast('User approved successfully. Profile created.');
+  };
+
+  const handleRejectUser = (id: string) => {
+    setPendingUsers(prev => prev.filter(u => u.id !== id));
+    showToast('User registration rejected.');
   };
 
   // Device Queue Actions
@@ -346,6 +361,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="flex gap-1.5 bg-[#f8f9fa] p-1.5 rounded-2xl border border-[#e1e3e4] overflow-x-auto no-scrollbar">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+            { id: 'registrations', label: 'Registrations', icon: 'how_to_reg' },
             { id: 'students', label: 'Students', icon: 'school' },
             { id: 'teachers', label: 'Faculty', icon: 'badge' },
             { id: 'classes', label: 'Classes & Courses', icon: 'menu_book' },
@@ -602,6 +618,77 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   <span>View Failed Syncs</span>
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB: REGISTRATIONS
+           ======================================================== */}
+        {activeTab === 'registrations' && (
+          <div className="flex flex-col gap-5 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl border border-[#e1e3e4] shadow-xs flex flex-col p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-[18px] font-bold text-[#031635]">Pending Registrations</h2>
+                  <p className="text-[12px] text-[#75777f]">Review and approve new student and teacher accounts.</p>
+                </div>
+                <button 
+                  onClick={() => showToast('Quick add mode enabled.')}
+                  className="px-4 py-2 bg-[#031635] text-white rounded-xl text-[13px] font-bold shadow-sm flex items-center gap-1 hover:bg-[#1a2b4b]"
+                >
+                  <span className="material-symbols-outlined text-[18px]">person_add</span>
+                  Directly Add User
+                </button>
+              </div>
+
+              {pendingUsers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-10 text-[#75777f]">
+                  <span className="material-symbols-outlined text-[48px] mb-2 opacity-50">done_all</span>
+                  <p className="font-bold">No pending registrations</p>
+                  <p className="text-[12px]">All users have been processed.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[13px] text-left">
+                    <thead>
+                      <tr className="border-b border-[#f3f4f5] text-[#75777f]">
+                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Name</th>
+                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Email</th>
+                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Role</th>
+                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Date</th>
+                        <th className="py-3 px-4 font-semibold uppercase text-[10px] text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingUsers.map(user => (
+                        <tr key={user.id} className="border-b border-[#f3f4f5] hover:bg-[#f8f9fa] transition-colors">
+                          <td className="py-3 px-4 font-bold text-[#031635]">{user.name}</td>
+                          <td className="py-3 px-4 text-[#44474e]">{user.email}</td>
+                          <td className="py-3 px-4">
+                            <span className="bg-[#eef2ff] text-[#031635] text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border border-[#d8e2ff]">
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-[#75777f]">{new Date(user.createdAt).toLocaleDateString()}</td>
+                          <td className="py-3 px-4">
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => handleApproveUser(user.id)} className="bg-[#a0f399]/40 text-[#005312] hover:bg-[#a0f399] px-3 py-1.5 rounded-lg text-[12px] font-bold border border-[#a0f399]/60 flex items-center gap-1 transition-colors">
+                                <span className="material-symbols-outlined text-[16px]">check</span>
+                                Approve
+                              </button>
+                              <button onClick={() => handleRejectUser(user.id)} className="bg-[#ffdad6]/40 text-[#ba1a1a] hover:bg-[#ffdad6] px-3 py-1.5 rounded-lg text-[12px] font-bold border border-[#ffdad6]/60 flex items-center gap-1 transition-colors">
+                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}

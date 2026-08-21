@@ -12,6 +12,13 @@ enum Role {
   ADMIN
 }
 
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
 enum AttendanceStatus {
   PRESENT
   PROBABLE
@@ -34,6 +41,7 @@ model User {
   role           Role
   name           String
   avatarUrl      String?
+  status         UserStatus @default(PENDING)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   

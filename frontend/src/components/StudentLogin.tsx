@@ -190,6 +190,13 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({
               </button>
             </p>
 
+            <p className="mt-1">
+              New here?{' '}
+              <a href="/register" className="font-bold text-[#031635] hover:underline">
+                Create an Account
+              </a>
+            </p>
+
             {(onSwitchToAdmin || onSwitchToTeacher) && (
               <div className="pt-2 border-t border-[#f3f4f5] flex items-center justify-center gap-3">
                 <span>Switch Portal:</span>

@@ -24,6 +24,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { StudentPortal } from './pages/StudentPortal';
 import { TeacherPortal } from './pages/TeacherPortal';
 import { AdminPortalPage } from './pages/AdminPortalPage';
+import { RegistrationPage } from './pages/RegistrationPage';
 import { CorrectionModal } from './components/CorrectionModal';
 import { DeviceRecoveryModal } from './components/DeviceRecoveryModal';
 
@@ -445,7 +446,8 @@ export default function App() {
       {/* Main Viewport */}
       <div className="flex-1 flex flex-col items-center justify-start w-full max-w-full">
                 <Routes>
-          <Route path="/" element={<Navigate to="/student" />} />
+          <Route path="/" element={<Navigate to="/student" replace />} />
+          <Route path="/register" element={<RegistrationPage />} />
           <Route path="/student/*" element={
             <StudentPortal
               isPhoneFrame={isPhoneFrame}

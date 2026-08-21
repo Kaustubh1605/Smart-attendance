@@ -28,3 +28,34 @@ export const registerDevice = async (req: any, res: Response) => {
         res.status(400).json({ success: false, message: error.message });
     }
 };
+
+export const getPendingUsers = async (req: any, res: Response) => {
+    try {
+        if (req.user.role !== 'ADMIN') throw new Error('Unauthorized');
+        const result = await AuthService.getPendingUsers();
+        res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+        res.status(403).json({ success: false, message: error.message });
+    }
+};
+
+export const approveUser = async (req: any, res: Response) => {
+    try {
+        if (req.user.role !== 'ADMIN') throw new Error('Unauthorized');
+        const { userId, action } = req.body;
+        const result = await AuthService.approveUser(userId, action);
+        res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
+export const adminAddUser = async (req: any, res: Response) => {
+    try {
+        if (req.user.role !== 'ADMIN') throw new Error('Unauthorized');
+        const result = await AuthService.adminAddUser(req.body);
+        res.status(201).json({ success: true, data: result });
+    } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
