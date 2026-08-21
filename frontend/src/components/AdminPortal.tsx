@@ -57,6 +57,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // New States for Highlights & Photo Upload
+  const [selectedHighlight, setSelectedHighlight] = useState<{ title: string; desc: string; icon: string; color: string; actionText: string } | null>(null);
+  const [studentForPhotoUpload, setStudentForPhotoUpload] = useState<AdminStudent | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   // Selected Item for Inspect/Edit
   const [selectedStudentForEdit, setSelectedStudentForEdit] = useState<AdminStudent | null>(null);
   const [showAddTimetableModal, setShowAddTimetableModal] = useState(false);
@@ -437,7 +442,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-2.5 text-[12px]">
-                  <div className="p-3 bg-[#fffaf0] border border-[#ffdcc6] rounded-xl flex items-start gap-2.5">
+                  <button onClick={() => setSelectedHighlight({ title: '2 Device Transfer Requests Pending', desc: 'Students submitted 2FA hardware reassignment for review.', icon: 'sync_problem', color: '#723600', actionText: 'Review Transfer Requests' })} className="w-full p-3 bg-[#fffaf0] hover:bg-[#ffdcc6]/50 border border-[#ffdcc6] rounded-xl flex items-start gap-2.5 transition-colors text-left cursor-pointer">
                     <span className="material-symbols-outlined text-[#723600] text-[18px] shrink-0 mt-0.5">
                       sync_problem
                     </span>
@@ -447,9 +452,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         Students submitted 2FA hardware reassignment for review.
                       </span>
                     </div>
-                  </div>
+                  </button>
 
-                  <div className="p-3 bg-[#f8f9fc] border border-[#e1e3e4] rounded-xl flex items-start gap-2.5">
+                  <button onClick={() => setSelectedHighlight({ title: 'Room 301 BLE Beacon Signal Weak', desc: 'Battery telemetry at 14%. Maintenance ticket auto-dispatched.', icon: 'wifi_off', color: '#031635', actionText: 'View Maintenance Ticket' })} className="w-full p-3 bg-[#f8f9fc] hover:bg-[#e1e3e4]/50 border border-[#e1e3e4] rounded-xl flex items-start gap-2.5 transition-colors text-left cursor-pointer">
                     <span className="material-symbols-outlined text-[#031635] text-[18px] shrink-0 mt-0.5">
                       wifi_off
                     </span>
@@ -459,9 +464,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         Battery telemetry at 14%. Maintenance ticket auto-dispatched.
                       </span>
                     </div>
-                  </div>
+                  </button>
 
-                  <div className="p-3 bg-[#fff8f6] border border-[#ffdad6] rounded-xl flex items-start gap-2.5">
+                  <button onClick={() => setSelectedHighlight({ title: '8 Students Below 75% Threshold', desc: 'Automated attendance warning notices sent via campus portal.', icon: 'warning', color: '#ba1a1a', actionText: 'View At-Risk Students' })} className="w-full p-3 bg-[#fff8f6] hover:bg-[#ffdad6]/50 border border-[#ffdad6] rounded-xl flex items-start gap-2.5 transition-colors text-left cursor-pointer">
                     <span className="material-symbols-outlined text-[#ba1a1a] text-[18px] shrink-0 mt-0.5">
                       warning
                     </span>
@@ -471,7 +476,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         Automated attendance warning notices sent via campus portal.
                       </span>
                     </div>
-                  </div>
+                  </button>
                 </div>
               </div>
 
@@ -708,6 +713,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setStudentForPhotoUpload(st)}
+                            className="px-2.5 py-1 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1"
+                            title="Update Profile Photo"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">add_a_photo</span>
+                            <span>Photo</span>
+                          </button>
+
                           <button
                             onClick={() => handleResetStudentDevice(st.id)}
                             className="px-2.5 py-1 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs"
@@ -1690,6 +1704,72 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Highlight Details Modal */}
+      {selectedHighlight && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#031635]/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-[#e1e3e4]">
+            <div className="p-5 border-b border-[#f3f4f5] flex justify-between items-center">
+              <h2 className="text-[18px] font-bold text-[#031635] flex items-center gap-2">
+                <span className="material-symbols-outlined" style={{ color: selectedHighlight.color }}>{selectedHighlight.icon}</span>
+                Highlight Details
+              </h2>
+              <button
+                onClick={() => setSelectedHighlight(null)}
+                className="w-8 h-8 rounded-full bg-[#f8f9fa] flex items-center justify-center text-[#44474e] hover:bg-[#e1e3e4] cursor-pointer transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <div className="p-5 flex flex-col gap-3">
+              <h3 className="text-[16px] font-bold" style={{ color: selectedHighlight.color }}>{selectedHighlight.title}</h3>
+              <p className="text-[14px] text-[#44474e]">{selectedHighlight.desc}</p>
+              <div className="mt-4 p-4 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl flex items-center justify-between">
+                 <span className="text-[12px] font-bold text-[#75777f]">Further Action Required:</span>
+                 <button onClick={() => { showToast('Action initiated: ' + selectedHighlight.actionText); setSelectedHighlight(null); }} className="px-4 py-2 bg-[#031635] text-white text-[12px] font-bold rounded-xl shadow-xs cursor-pointer hover:bg-[#1a2b4b]">
+                    {selectedHighlight.actionText}
+                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Upload Modal */}
+      {studentForPhotoUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#031635]/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-[#e1e3e4]">
+            <div className="p-5 border-b border-[#f3f4f5] flex justify-between items-center">
+              <h2 className="text-[16px] font-bold text-[#031635]">Update Profile Photo</h2>
+              <button
+                onClick={() => setStudentForPhotoUpload(null)}
+                className="w-8 h-8 rounded-full bg-[#f8f9fa] flex items-center justify-center text-[#44474e] hover:bg-[#e1e3e4] cursor-pointer transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <div className="p-6 flex flex-col items-center gap-4">
+              <div className="w-24 h-24 rounded-full bg-[#eef2ff] border-2 border-dashed border-[#a8bcf9] flex flex-col items-center justify-center text-[#031635] cursor-pointer hover:bg-[#d8e2ff] transition-colors shadow-sm" onClick={() => fileInputRef.current?.click()}>
+                 <span className="material-symbols-outlined text-[28px]">add_a_photo</span>
+                 <span className="text-[10px] font-bold mt-1">Select File</span>
+              </div>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                      showToast(`Profile photo updated for ${studentForPhotoUpload.name}`);
+                      setStudentForPhotoUpload(null);
+                  }
+              }} />
+              <div className="text-center">
+                 <p className="text-[15px] font-bold text-[#031635]">{studentForPhotoUpload.name}</p>
+                 <p className="text-[12px] font-mono text-[#75777f] mt-0.5">{studentForPhotoUpload.studentId}</p>
+              </div>
+              <div className="w-full mt-2 text-[11px] text-[#75777f] text-center bg-[#f8f9fa] border border-[#e1e3e4] p-2.5 rounded-xl">
+                 <span className="font-bold">Formats:</span> JPG, PNG files only. <span className="font-bold">Max size:</span> 2MB.
+              </div>
+            </div>
           </div>
         </div>
       )}
