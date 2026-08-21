@@ -37,9 +37,9 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
   const [showStartLectureModal, setShowStartLectureModal] = useState<boolean>(false);
   const [sessionActive, setSessionActive] = useState<boolean>(false);
 
-  // Dynamic QR Code Rotation State (15 Seconds countdown)
+  // Dynamic QR Code Rotation State (10 Seconds countdown)
   const [qrToken, setQrToken] = useState<string>('OFFLINE-NONCE-7729-SEC');
-  const [tokenCountdown, setTokenCountdown] = useState<number>(15);
+  const [tokenCountdown, setTokenCountdown] = useState<number>(10);
   const [qrRefreshCount, setQrRefreshCount] = useState<number>(1);
 
   // Live Roster & Student Records State
@@ -67,7 +67,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
     'all' | 'online' | 'offline' | 'pending_sync' | 'synced' | 'needs_review'
   >('all');
 
-  // Dynamic 15-Second QR Timer Interval
+  // Dynamic 10-Second QR Timer Interval
   useEffect(() => {
     if (!sessionActive) return;
     const timer = setInterval(() => {
@@ -75,7 +75,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
         if (prev <= 1) {
           setQrToken(`OFFLINE-NONCE-${Math.floor(1000 + Math.random() * 9000)}-SEC`);
           setQrRefreshCount((c) => c + 1);
-          return 15;
+          return 10;
         }
         return prev - 1;
       });
@@ -367,7 +367,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
                   }`}
                 >
                   <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
-                  <span>Dynamic QR (15s)</span>
+                  <span>Dynamic QR (10s)</span>
                 </button>
 
                 <button
@@ -919,7 +919,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
                 </span>
               </div>
 
-              {/* Dynamic 15s Countdown Progress Bar */}
+              {/* Dynamic 10s Countdown Progress Bar */}
               <div className="w-full max-w-sm flex flex-col gap-1.5">
                 <div className="flex justify-between items-center text-[12px]">
                   <span className="text-[#75777f] flex items-center gap-1">
@@ -933,7 +933,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
                 <div className="w-full h-2 bg-[#f3f4f5] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#031635] transition-all duration-1000 ease-linear rounded-full"
-                    style={{ width: `${(tokenCountdown / 15) * 100}%` }}
+                    style={{ width: `${(tokenCountdown / 10) * 100}%` }}
                   />
                 </div>
               </div>
@@ -944,7 +944,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
               <button
                 onClick={() => {
                   setQrToken(`OFFLINE-NONCE-${Math.floor(1000 + Math.random() * 9000)}-SEC`);
-                  setTokenCountdown(15);
+                  setTokenCountdown(10);
                   setQrRefreshCount((c) => c + 1);
                 }}
                 className="px-4 py-2.5 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl font-bold text-[12px] transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
@@ -1206,7 +1206,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
                                     : 'bg-[#ffdad6] text-[#ba1a1a]'
                                 }`}
                               >
-                                {st.evidence.dynamicQr === 'valid' ? '✓ 15s QR' : '⚠ Expired QR'}
+                                {st.evidence.dynamicQr === 'valid' ? '✓ 10s QR' : '⚠ Expired QR'}
                               </span>
 
                               <span
@@ -1586,7 +1586,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
                 </span>
                 <span className="flex items-center gap-1.5 text-[#005312] font-semibold bg-[#f8f9fa] p-2 rounded-xl">
                   <span className="material-symbols-outlined text-[15px]">qr_code</span>
-                  Dynamic QR (15s)
+                  Dynamic QR (10s)
                 </span>
                 <span className="flex items-center gap-1.5 text-[#005312] font-semibold bg-[#f8f9fa] p-2 rounded-xl">
                   <span className="material-symbols-outlined text-[15px]">timer</span>
@@ -1699,7 +1699,7 @@ export const TeacherOfflineAttendance: React.FC<TeacherOfflineAttendanceProps> =
                 </div>
 
                 <div className="p-2.5 bg-[#f8f9fa] rounded-xl flex justify-between items-center">
-                  <span className="font-semibold text-[#191c1d]">Dynamic QR (15s Nonce)</span>
+                  <span className="font-semibold text-[#191c1d]">Dynamic QR (10s Nonce)</span>
                   <span className="text-[#005312] font-bold">✓ Valid</span>
                 </div>
 

@@ -1053,7 +1053,7 @@ export const MOCK_TIMETABLE: TimetableSlot[] = [
 ];
 
 export const DEFAULT_INSTITUTION_SETTINGS: InstitutionSettings = {
-  qrExpirySeconds: 15,
+  qrExpirySeconds: 10,
   locationToleranceMeters: 30,
   sessionDurationMinutes: 45,
   offlineModeEnabled: true,

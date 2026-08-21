@@ -9,6 +9,7 @@ import { VisualVerificationModal } from './VisualVerificationModal';
 import { HelpSupportModal } from './HelpSupportModal';
 import { TeacherOfflineAttendance } from './TeacherOfflineAttendance';
 import { TeacherStudyMaterials } from './TeacherStudyMaterials';
+import { generateDynamicQRChallenge } from '../services/qrVerificationService';
 
 interface TeacherDashboardProps {
   lectures: Lecture[];
@@ -85,9 +86,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   // Correction requests state
   const [correctionRequests, setCorrectionRequests] = useState<CorrectionRequest[]>(MOCK_CORRECTION_REQUESTS);
 
-  // Dynamic 5-Second QR Refresh State
-  const [qrToken, setQrToken] = useState('SA-5S-9821');
-  const [tokenCountdown, setTokenCountdown] = useState(5);
+  // Dynamic 10-Second QR Refresh State
+  const [qrChallenge, setQrChallenge] = useState(() =>
+    generateDynamicQRChallenge(currentLecture.id, currentLecture.code)
+  );
+  const [qrToken, setQrToken] = useState(qrChallenge.token);
+  const [tokenCountdown, setTokenCountdown] = useState(10);
 
   // Form State for Creating New Event / Lecture
   const [newEventName, setNewEventName] = useState('');
@@ -121,20 +125,22 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     return () => document.removeEventListener('click', handleDocumentClick);
   }, []);
 
-  // EXACTLY 5-second countdown and dynamic challenge token rotation
+  // EXACTLY 10-second countdown and dynamic challenge token rotation
   useEffect(() => {
     if (!sessionActive) return;
     const interval = setInterval(() => {
       setTokenCountdown((prev) => {
         if (prev <= 1) {
-          setQrToken(`SA-5S-${Math.floor(1000 + Math.random() * 9000)}`);
-          return 5;
+          const newChallenge = generateDynamicQRChallenge(currentLecture.id, currentLecture.code);
+          setQrChallenge(newChallenge);
+          setQrToken(newChallenge.token);
+          return 10;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [sessionActive]);
+  }, [sessionActive, currentLecture.id, currentLecture.code]);
 
   const filteredStudents = students
     .filter((s) => {
@@ -157,8 +163,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     onSelectLecture(lec);
     setSessionActive(true);
     setActiveTab('live');
-    setTokenCountdown(5);
-    setQrToken(`SA-5S-${Math.floor(1000 + Math.random() * 9000)}`);
+    setTokenCountdown(10);
+    const newChallenge = generateDynamicQRChallenge(lec.id, lec.code);
+    setQrChallenge(newChallenge);
+    setQrToken(newChallenge.token);
     showToast(`Started attendance session for ${lec.name}`);
   };
 
@@ -516,7 +524,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 <span className="material-symbols-outlined text-[16px]">present_to_all</span>
                 <span>Projector QR</span>
                 <span className="bg-[#a0f399] text-[#005312] text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                  5s
+                  10s
                 </span>
               </button>
             )}
@@ -740,9 +748,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               </div>
             </div>
 
-            {/* Live 5-Second Dynamic QR Refresh Banner & Metric Cards */}
+            {/* Live 10-Second Dynamic QR Refresh Banner & Metric Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Dynamic 5-Second QR Card */}
+              {/* Dynamic 10-Second QR Card */}
               <div className="bg-[#031635] text-white p-5 rounded-3xl border border-white/10 shadow-lg flex flex-col justify-between relative overflow-hidden">
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col">
@@ -751,7 +759,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                       <span className="bg-[#a0f399] text-[#005312] text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
                         Dynamic QR
                       </span>
-                      <span className="text-[11px] text-[#b6c6ef]">Changes every 5 seconds</span>
+                      <span className="text-[11px] text-[#b6c6ef]">Changes every 10 seconds</span>
                     </div>
                     <h3 className="text-[16px] font-bold text-white mt-1">Live Attendance QR</h3>
                   </div>
@@ -781,11 +789,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                         <span>{tokenCountdown}s</span>
                       </span>
                     </div>
-                    {/* Visual 5-second progress countdown bar */}
+                    {/* Visual 10-second progress countdown bar */}
                     <div className="w-full bg-white/20 h-1.5 rounded-full mt-1.5 overflow-hidden">
                       <div
                         className="bg-[#a0f399] h-full rounded-full transition-all duration-1000 ease-linear"
-                        style={{ width: `${(tokenCountdown / 5) * 100}%` }}
+                        style={{ width: `${(tokenCountdown / 10) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -803,7 +811,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     </button>
                   </div>
                   <p className="text-[10px] text-white/70 italic">
-                    Each QR code is temporary and expires after 5 seconds.
+                    Each QR code is temporary and expires after 10 seconds.
                   </p>
                 </div>
               </div>
@@ -1006,7 +1014,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                               Key
                             </span>
                             <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
-                              5s
+                              10s
                             </span>
                           </div>
                         </td>
@@ -1825,7 +1833,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   className="w-full accent-[#031635] cursor-pointer"
                 />
                 <span className="text-[11px] text-[#75777f]">
-                  Students outside this radius will be flagged for review during 5-second challenge submission.
+                  Students outside this radius will be flagged for review during 10-second challenge submission.
                 </span>
               </div>
 
@@ -1863,7 +1871,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </div>
       )}
 
-      {/* PROJECTOR FULLSCREEN QR MODAL WITH 5-SECOND REFRESH */}
+      {/* PROJECTOR FULLSCREEN QR MODAL WITH 10-SECOND REFRESH */}
       {showProjectorQR && (
         <div className="fixed inset-0 z-50 bg-[#031635]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-white animate-in fade-in overflow-y-auto">
           <button
@@ -1878,7 +1886,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 justify-center">
                 <span className="bg-[#a0f399] text-[#005312] text-[12px] font-extrabold uppercase px-3.5 py-1 rounded-full w-fit shadow-sm">
-                  Dynamic QR • 5-Second Rotation
+                  Dynamic QR • 10-Second Rotation
                 </span>
               </div>
               <h2 className="text-[28px] md:text-[34px] font-extrabold text-white mt-1">
@@ -1904,17 +1912,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 </span>
               </div>
 
-              {/* Dynamic 5-Second Progress Bar */}
+              {/* Dynamic 10-Second Progress Bar */}
               <div className="w-full bg-[#f3f4f5] h-2.5 rounded-full overflow-hidden">
                 <div
                   className="bg-[#1b6d24] h-full rounded-full transition-all duration-1000 ease-linear"
-                  style={{ width: `${(tokenCountdown / 5) * 100}%` }}
+                  style={{ width: `${(tokenCountdown / 10) * 100}%` }}
                 />
               </div>
             </div>
 
             <p className="text-[12px] text-[#b6c6ef] max-w-md">
-              Each QR code is temporary and expires after 5 seconds. Screenshot forwarding is blocked by real-time challenge rotation and multi-factor location attestation.
+              Each QR code is temporary and expires after 10 seconds. Screenshot forwarding is blocked by real-time challenge rotation and multi-factor location attestation.
             </p>
           </div>
         </div>

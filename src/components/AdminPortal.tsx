@@ -1470,12 +1470,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 <div className="flex flex-col gap-1">
                   <label className="font-bold text-[#031635]">4. QR Refresh Interval</label>
                   <select
-                    value={settings.qrExpirySeconds || 15}
+                    value={settings.qrExpirySeconds || 10}
                     onChange={(e) => setSettings({ ...settings, qrExpirySeconds: Number(e.target.value) })}
                     className="px-3.5 py-2 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl font-semibold"
                   >
-                    <option value={10}>10 Seconds</option>
-                    <option value={15}>15 Seconds (Offline Standard)</option>
+                    <option value={10}>10 Seconds (SmartAttend Standard)</option>
+                    <option value={15}>15 Seconds</option>
                     <option value={30}>30 Seconds</option>
                   </select>
                 </div>

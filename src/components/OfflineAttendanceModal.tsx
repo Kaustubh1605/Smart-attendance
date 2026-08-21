@@ -32,7 +32,9 @@ export const OfflineAttendanceModal: React.FC<OfflineAttendanceModalProps> = ({
 
   const handleSimulateScan = () => {
     setActiveStep('scanning');
+    const attemptStartTime = Date.now();
     setTimeout(() => {
+      const now = Date.now();
       const newRec: OfflineAttendanceRecord = {
         id: generateUniqueId('off'),
         lectureId: activeLecture.id,
@@ -41,18 +43,25 @@ export const OfflineAttendanceModal: React.FC<OfflineAttendanceModalProps> = ({
         room: activeLecture.room,
         studentId: student.studentId,
         studentName: student.name,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: 'pending_sync',
+        sessionId: activeLecture.id,
+        challengeId: `CHAL-OFFLINE-${Math.floor(1000 + Math.random() * 9000)}`,
+        attemptStartTimestamp: attemptStartTime,
+        localVerificationTimestamp: now,
+        deviceId: student.registeredDevice?.deviceId || 'DEV-BOUND-PIXEL8',
+        verificationResult: 'verified_present',
+        offlineStatus: 'cached_signed',
         factors: {
           deviceBound: true,
-          sessionCode: `OFFLINE-${activeLecture.room.replace(' ', '')}-${activeLecture.code.replace(' ', '')}`,
+          sessionCode: `OFFLINE-10S-${Math.floor(1000 + Math.random() * 9000)}`,
           gpsCaptured: true,
           bleDetected: true,
         },
       };
       onRecordOfflineAttendance(newRec);
       setActiveStep('saved_offline');
-    }, 1500);
+    }, 1200);
   };
 
   const handleTriggerSync = () => {
@@ -94,21 +103,19 @@ export const OfflineAttendanceModal: React.FC<OfflineAttendanceModalProps> = ({
         <div className="flex border-b border-[#e1e3e4] bg-[#f8f9fa] px-5 pt-2">
           <button
             onClick={() => setActiveStep('session_view')}
-            className={`pb-2 px-3 text-[13px] font-bold transition-all cursor-pointer border-b-2 ${
-              activeStep === 'session_view' || activeStep === 'scanning' || activeStep === 'saved_offline'
+            className={`pb-2 px-3 text-[13px] font-bold transition-all cursor-pointer border-b-2 ${activeStep === 'session_view' || activeStep === 'scanning' || activeStep === 'saved_offline'
                 ? 'border-[#031635] text-[#031635]'
                 : 'border-transparent text-[#75777f] hover:text-[#191c1d]'
-            }`}
+              }`}
           >
             Offline Session
           </button>
           <button
             onClick={() => setActiveStep('sync_center')}
-            className={`pb-2 px-3 text-[13px] font-bold transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${
-              activeStep === 'sync_center'
+            className={`pb-2 px-3 text-[13px] font-bold transition-all cursor-pointer border-b-2 flex items-center gap-1.5 ${activeStep === 'sync_center'
                 ? 'border-[#031635] text-[#031635]'
                 : 'border-transparent text-[#75777f] hover:text-[#191c1d]'
-            }`}
+              }`}
           >
             <span>Sync Center</span>
             {pendingRecords.length > 0 && (
@@ -272,11 +279,10 @@ export const OfflineAttendanceModal: React.FC<OfflineAttendanceModalProps> = ({
                 <button
                   onClick={handleTriggerSync}
                   disabled={isSyncing || pendingRecords.length === 0}
-                  className={`py-2 px-3.5 rounded-xl font-bold text-[12px] flex items-center gap-1.5 transition-all cursor-pointer ${
-                    isSyncing || pendingRecords.length === 0
+                  className={`py-2 px-3.5 rounded-xl font-bold text-[12px] flex items-center gap-1.5 transition-all cursor-pointer ${isSyncing || pendingRecords.length === 0
                       ? 'bg-[#e1e3e4] text-[#75777f] cursor-not-allowed'
                       : 'bg-[#031635] text-white hover:bg-[#1a2b4b] shadow-xs'
-                  }`}
+                    }`}
                 >
                   <span className={`material-symbols-outlined text-[16px] ${isSyncing ? 'animate-spin' : ''}`}>
                     sync
@@ -298,9 +304,8 @@ export const OfflineAttendanceModal: React.FC<OfflineAttendanceModalProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                          rec.status === 'synced' ? 'bg-[#a0f399] text-[#005312]' : 'bg-[#ffdcc6] text-[#723600]'
-                        }`}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${rec.status === 'synced' ? 'bg-[#a0f399] text-[#005312]' : 'bg-[#ffdcc6] text-[#723600]'
+                          }`}
                       >
                         <span className="material-symbols-outlined text-[18px]">
                           {rec.status === 'synced' ? 'cloud_done' : 'cloud_upload'}
@@ -313,11 +318,10 @@ export const OfflineAttendanceModal: React.FC<OfflineAttendanceModalProps> = ({
                     </div>
 
                     <span
-                      className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${
-                        rec.status === 'synced'
+                      className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full ${rec.status === 'synced'
                           ? 'bg-[#a0f399] text-[#005312]'
                           : 'bg-[#ffdcc6] text-[#723600]'
-                      }`}
+                        }`}
                     >
                       {rec.status === 'synced' ? 'Synced' : 'Pending'}
                     </span>

@@ -180,6 +180,44 @@ export interface StudentNotification {
   isRead: boolean;
 }
 
+export interface DynamicQRChallenge {
+  challengeId: string;
+  token: string;
+  sessionId: string;
+  lectureCode: string;
+  createdAt: number; // epoch ms
+  expiresAt: number; // epoch ms (createdAt + 10000)
+  rotationIntervalSeconds: number; // 10
+  signature: string;
+}
+
+export interface QRVerificationAttempt {
+  studentId: string;
+  studentName?: string;
+  deviceId: string;
+  sessionId: string;
+  lectureCode: string;
+  challenge: DynamicQRChallenge;
+  attemptStartTime: number; // epoch ms when student initiated scan
+  completionTime?: number; // epoch ms when processed/received
+  bleDetected: boolean;
+  bleRssi?: number;
+  locationStatus: 'verified' | 'uncertain' | 'mismatch';
+  distanceMeters: number;
+  isOffline?: boolean;
+}
+
+export interface QRVerificationResult {
+  success: boolean;
+  status: VerificationResultStatus;
+  attendanceStatus: AttendanceStatus;
+  rejectionReason?: string;
+  confidenceScore: number;
+  evidence: VerificationEvidence;
+  challengeStatus: 'valid' | 'expired' | 'tampered' | 'duplicate';
+  isGraceProcessed?: boolean;
+}
+
 export interface OfflineAttendanceRecord {
   id: string;
   lectureId: string;
@@ -196,6 +234,13 @@ export interface OfflineAttendanceRecord {
     gpsCaptured: boolean;
     bleDetected: boolean;
   };
+  sessionId?: string;
+  challengeId?: string;
+  attemptStartTimestamp?: number;
+  localVerificationTimestamp?: number;
+  deviceId?: string;
+  verificationResult?: VerificationResultStatus;
+  offlineStatus?: 'cached_signed' | 'synced';
   syncedAt?: string;
 }
 

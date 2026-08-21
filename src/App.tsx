@@ -17,6 +17,7 @@ import {
   AuditLogEntry,
   AttendanceStatus,
   StudyMaterial,
+  QRVerificationResult,
 } from './types';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -274,29 +275,33 @@ export default function App() {
   };
 
   // Student verification complete handler
-  const handleVerificationComplete = (lecture: Lecture) => {
+  const handleVerificationComplete = (lecture: Lecture, result?: QRVerificationResult) => {
     setIsVerifying(false);
+    const finalAttendanceStatus: AttendanceStatus = result?.attendanceStatus || 'present';
+    const confidenceScore = result?.confidenceScore ?? 98;
+    const timeStr = result?.evidence?.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     // Add record to history if not already present
     const newRecord: AttendanceRecord = {
       id: generateUniqueId('rec'),
-      date: '2023-10-24',
-      day: '24',
-      month: 'Oct',
+      date: new Date().toISOString().slice(0, 10),
+      day: new Date().getDate().toString(),
+      month: new Date().toLocaleString('default', { month: 'short' }),
       lectureCode: lecture.code,
       subjectName: lecture.name,
       lectureType: `Lecture - ${lecture.room}`,
       room: lecture.room,
-      status: 'present',
-      evidence: {
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: finalAttendanceStatus,
+      evidence: result?.evidence || {
+        timestamp: timeStr,
         locationStatus: 'verified',
         locationDistanceMeters: 4.8,
         deviceStatus: 'trusted',
         dynamicChallengeVerified: true,
         challengeLatencyMs: 380,
         bleDetected: true,
-        confidenceScore: 100,
-        notes: 'Verified via live classroom camera scan & GPS geofence match.'
+        confidenceScore: 98,
+        notes: 'Verified via live classroom 10s QR challenge & GPS geofence match.'
       }
     };
 
@@ -306,7 +311,7 @@ export default function App() {
     setClassStudents((prev) =>
       prev.map((s) =>
         s.studentId === studentData.studentId
-          ? { ...s, status: 'present', confidence: 100, time: newRecord.evidence.timestamp }
+          ? { ...s, status: finalAttendanceStatus, confidence: confidenceScore, time: timeStr }
           : s
       )
     );
@@ -320,8 +325,8 @@ export default function App() {
       action: 'ATTENDANCE_SELF_VERIFIED',
       entity: 'AttendanceRecord',
       entityId: newRecord.id,
-      newState: 'PRESENT (100% Multi-Factor Conf)',
-      reason: `QR Challenge + GPS (${lecture.geofence.radiusMeters}m geofence) + Bound Device`,
+      newState: `${finalAttendanceStatus.toUpperCase()} (${confidenceScore}% Multi-Factor Conf)`,
+      reason: `10s QR Challenge + GPS (${lecture.geofence.radiusMeters}m geofence) + Bound Device`,
       ipAddress: '10.0.4.22'
     };
     setAuditLogs((prev) => [auditEntry, ...prev]);
