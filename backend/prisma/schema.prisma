@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum AttendanceStatus {
+  PRESENT
+  PROBABLE
+  NEEDS_REVIEW
+  ABSENT
+}
+
+enum VerificationResultStatus {
+  VERIFIED_PRESENT
+  PROBABLE_PRESENT
+  NEEDS_REVIEW
+  NOT_VERIFIED
+  POSSIBLE_PROXY
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  role           Role
+  name           String
+  avatarUrl      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+  adminProfile   AdminProfile?
+}
+
+model StudentProfile {
+  id                          String    @id @default(uuid())
+  userId                      String    @unique
+  user                        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentId                   String    @unique
+  program                     String
+  batch                       String
+  overallAttendancePercentage Float     @default(0)
+  currentStreak               Int       @default(0)
+  weeklyDelta                 Float     @default(0)
+  
+  // Device Binding
+  deviceName                  String?
+  deviceId                    String?   @unique
+  deviceModel                 String?
+  isDeviceTrusted             Boolean   @default(false)
+  deviceRegisteredAt          DateTime?
+  deviceLastVerifiedAt        DateTime?
+  deviceFingerprintHash       String?
+
+  attendanceRecords           AttendanceRecord[]
+  correctionRequests          CorrectionRequest[]
+}
+
+model TeacherProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teacherId      String    @unique
+  department     String
+  
+  lectures       Lecture[]
+}
+
+model AdminProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Classroom {
+  id                 String    @id @default(uuid())
+  name               String
+  building           String
+  roomNumber         String
+  capacity           Int
+  lat                Float
+  lng                Float
+  radiusMeters       Float
+  geofenceStatus     String    @default("active") // "active" | "inactive"
+  bleBeaconId        String?   @unique
+  bleStatus          String    @default("active") // "active" | "offline"
+  localNetworkSsid   String?
+  localNetworkStatus String?
+  offlineEnabled     Boolean   @default(false)
+  
+  lectures           Lecture[]
+}
+
+model Lecture {
+  id              String    @id @default(uuid())
+  code            String
+  name            String
+  className       String?
+  date            DateTime
+  startTime       String
+  endTime         String
+  duration        String?
+  status          String    @default("upcoming") // "active" | "upcoming" | "completed"
+  
+  teacherId       String
+  teacher         TeacherProfile @relation(fields: [teacherId], references: [id])
+  
+  classroomId     String
+  classroom       Classroom @relation(fields: [classroomId], references: [id])
+  
+  activeSessionId String?   @unique
+  
+  attendanceRecords AttendanceRecord[]
+  correctionRequests CorrectionRequest[]
+}
+
+model AttendanceRecord {
+  id                 String    @id @default(uuid())
+  studentId          String
+  student            StudentProfile @relation(fields: [studentId], references: [id])
+  lectureId          String
+  lecture            Lecture @relation(fields: [lectureId], references: [id])
+  
+  status             AttendanceStatus
+  timestamp          DateTime @default(now())
+  
+  // Evidence JSON block
+  locationStatus     String? // 'verified' | 'mismatch' | 'uncertain'
+  locationDistance   Float?
+  deviceStatus       String? // 'trusted' | 'unrecognized' | 'mismatch'
+  challengeVerified  Boolean?
+  challengeLatencyMs Int?
+  bleDetected        Boolean?
+  bleSignalRssi      Int?
+  cctvFaceMatch      String? // 'match' | 'uncertain' | 'unavailable'
+  confidenceScore    Float?
+  evidenceNotes      String?
+  
+  hasCorrectionReq   Boolean @default(false)
+  correctionStatus   String?
+  teacherNote        String?
+}
+
+model CorrectionRequest {
+  id               String    @id @default(uuid())
+  studentId        String
+  student          StudentProfile @relation(fields: [studentId], references: [id])
+  lectureId        String
+  lecture          Lecture @relation(fields: [lectureId], references: [id])
+  
+  currentStatus    AttendanceStatus
+  reason           String
+  note             String?
+  status           String    @default("pending") // 'pending' | 'approved' | 'rejected'
+  teacherNote      String?
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  
+  submittedAt      DateTime  @default(now())
+}
