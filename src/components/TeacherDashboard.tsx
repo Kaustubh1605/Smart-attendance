@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LOGO_URL, MOCK_SUBJECTS, MOCK_CORRECTION_REQUESTS, generateUniqueId } from '../data/mockData';
-import { StudentAttendanceItem, Lecture, AttendanceStatus, CorrectionRequest } from '../types';
+import { StudentAttendanceItem, Lecture, AttendanceStatus, CorrectionRequest, StudyMaterial } from '../types';
 import { TeacherStudentVerificationModal } from './TeacherStudentVerificationModal';
 import { TeacherReviewQueueModal } from './TeacherReviewQueueModal';
 import { TeacherReportsModal } from './TeacherReportsModal';
@@ -8,6 +8,7 @@ import { TeacherOfflineModeModal } from './TeacherOfflineModeModal';
 import { VisualVerificationModal } from './VisualVerificationModal';
 import { HelpSupportModal } from './HelpSupportModal';
 import { TeacherOfflineAttendance } from './TeacherOfflineAttendance';
+import { TeacherStudyMaterials } from './TeacherStudyMaterials';
 
 interface TeacherDashboardProps {
   lectures: Lecture[];
@@ -15,12 +16,16 @@ interface TeacherDashboardProps {
   onSelectLecture: (lecture: Lecture) => void;
   onCreateLecture: (newLecture: Lecture) => void;
   onUpdateLecture?: (updatedLecture: Lecture) => void;
-  onDeleteLecture?: (lectureId: string, isArchive?: boolean) => void;
+  onDeleteLecture?: (lectureId: string, isArchive?: boolean, deleteAttendance?: boolean) => void;
   onEndAttendance?: (lectureId: string) => void;
   students: StudentAttendanceItem[];
   onUpdateStudentStatus: (studentId: string, newStatus: AttendanceStatus, reason: string) => void;
   onNavigateHome: () => void;
   onLogout?: () => void;
+  studyMaterials?: StudyMaterial[];
+  onAddStudyMaterial?: (material: StudyMaterial) => void;
+  onUpdateStudyMaterial?: (material: StudyMaterial) => void;
+  onDeleteStudyMaterial?: (materialId: string) => void;
 }
 
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
@@ -34,9 +39,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   students,
   onUpdateStudentStatus,
   onLogout,
+  studyMaterials = [],
+  onAddStudyMaterial,
+  onUpdateStudyMaterial,
+  onDeleteStudyMaterial,
 }) => {
-  // Navigation View: 'live' | 'events' | 'offline'
-  const [activeTab, setActiveTab] = useState<'live' | 'events' | 'offline'>('live');
+  // Navigation View: 'live' | 'events' | 'materials' | 'offline'
+  const [activeTab, setActiveTab] = useState<'live' | 'events' | 'materials' | 'offline'>('live');
   const [isInternetOnline] = useState<boolean>(false);
   const [sessionActive, setSessionActive] = useState(true);
   const [showProjectorQR, setShowProjectorQR] = useState(false);
@@ -61,6 +70,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   // Delete / Archive Modal State
   const [deletingLecture, setDeletingLecture] = useState<Lecture | null>(null);
+  const [deleteMode, setDeleteMode] = useState<'archive' | 'purge'>('archive');
+  const [confirmPurgeAttendance, setConfirmPurgeAttendance] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Modals for Teacher expansion
@@ -278,8 +289,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   };
 
   // Open Delete / Archive Modal
-  const handleOpenDeleteLecture = (lec: Lecture) => {
+  const handleOpenDeleteLecture = (lec: Lecture, defaultMode: 'archive' | 'purge' = 'archive') => {
     setDeletingLecture(lec);
+    const hasAttendance = Boolean(lec.attendanceCount && lec.attendanceCount > 0);
+    setDeleteMode(hasAttendance ? defaultMode : 'purge');
+    setConfirmPurgeAttendance(false);
     setDeleteError(null);
   };
 
@@ -287,28 +301,34 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const handleConfirmDelete = () => {
     if (!deletingLecture) return;
 
-    // Rule C: Active lecture cannot be deleted
+    // Rule C: Active lecture cannot be directly deleted while live
     if (deletingLecture.status === 'active') {
-      setDeleteError('Active lecture cannot be deleted. Teacher must first end the attendance session.');
+      setDeleteError('Active attendance session in progress. Please click "End Attendance" first before removing.');
       return;
     }
 
-    // Rule D: Completed lecture with attendance -> Archive
-    if (deletingLecture.status === 'completed' || (deletingLecture.attendanceCount && deletingLecture.attendanceCount > 0)) {
+    const hasAttendance = (deletingLecture.attendanceCount && deletingLecture.attendanceCount > 0) || deletingLecture.status === 'completed';
+
+    if (deleteMode === 'archive') {
       if (onDeleteLecture) {
-        onDeleteLecture(deletingLecture.id, true);
+        onDeleteLecture(deletingLecture.id, true, false);
       }
       setDeletingLecture(null);
       showToast('✓ Lecture archived from schedule successfully (attendance records preserved)');
       return;
     }
 
-    // Rule A & B: Scheduled/upcoming lecture with no finalized attendance -> Delete
+    // Purge / Delete mode
+    if (hasAttendance && !confirmPurgeAttendance) {
+      setDeleteError('Please check the confirmation box to verify you want to permanently purge this lecture and all attendance records.');
+      return;
+    }
+
     if (onDeleteLecture) {
-      onDeleteLecture(deletingLecture.id, false);
+      onDeleteLecture(deletingLecture.id, false, true);
     }
     setDeletingLecture(null);
-    showToast('✓ Lecture deleted successfully');
+    showToast(hasAttendance ? '✓ Lecture and associated attendance records deleted permanently' : '✓ Lecture deleted successfully');
   };
 
   const handleCreateNewLecture = (e: React.FormEvent) => {
@@ -527,8 +547,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-3 sm:px-4 md:px-6 flex flex-col gap-5 md:gap-6 pt-4 md:pt-6">
-        {/* Navigation Tabs between Live Session, Event Hub & Offline Attendance */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 bg-[#f8f9fa] p-1.5 rounded-2xl border border-[#e1e3e4]">
+        {/* Navigation Tabs between Live Session, Event Hub, Study Materials & Offline Attendance */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 bg-[#f8f9fa] p-1.5 rounded-2xl border border-[#e1e3e4]">
           <button
             onClick={() => setActiveTab('live')}
             className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
@@ -539,7 +559,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           >
             <span className="material-symbols-outlined text-[17px] shrink-0">radio_button_checked</span>
             <span className="truncate">
-              Live Attendance: <strong className="font-extrabold">{currentLecture.code}</strong>
+              Live: <strong className="font-extrabold">{currentLecture.code}</strong>
             </span>
             {sessionActive && <span className="w-2 h-2 rounded-full bg-[#a0f399] animate-pulse shrink-0" />}
           </button>
@@ -553,7 +573,24 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-[17px] shrink-0">event_note</span>
-            <span className="truncate">Start & Manage Events ({lectures.filter(l => !l.isArchived).length})</span>
+            <span className="truncate">Events & Lectures ({lectures.filter(l => !l.isArchived).length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('materials')}
+            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+              activeTab === 'materials'
+                ? 'bg-[#031635] text-white shadow-xs'
+                : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[17px] shrink-0">menu_book</span>
+            <span className="truncate">Study Materials</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              activeTab === 'materials' ? 'bg-white/20 text-white' : 'bg-[#eef2ff] text-[#031635]'
+            }`}>
+              {studyMaterials.length}
+            </span>
           </button>
 
           <button
@@ -565,12 +602,25 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-[17px] shrink-0">cloud_off</span>
-            <span className="truncate">Offline Attendance</span>
+            <span className="truncate">Offline Mode</span>
             <span className="bg-[#ffdcc6] text-[#723600] text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">
               Local Mesh
             </span>
           </button>
         </div>
+
+        {/* TAB: STUDY MATERIALS MANAGEMENT FOR TEACHERS */}
+        {activeTab === 'materials' && (
+          <div className="animate-in fade-in duration-200">
+            <TeacherStudyMaterials
+              materials={studyMaterials}
+              onAddMaterial={onAddStudyMaterial || (() => {})}
+              onUpdateMaterial={onUpdateStudyMaterial || (() => {})}
+              onDeleteMaterial={onDeleteStudyMaterial || (() => {})}
+              lectures={lectures}
+            />
+          </div>
+        )}
 
         {/* Offline Readiness Warning Card if in Live View while Offline */}
         {activeTab !== 'offline' && !isInternetOnline && (
@@ -1164,7 +1214,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                     <button
                                       onClick={() => {
                                         setOpenMenuLectureId(null);
-                                        handleOpenDeleteLecture(lec);
+                                        handleOpenDeleteLecture(lec, 'purge');
                                       }}
                                       className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#ba1a1a] hover:bg-[#ffdad6]/40 flex items-center gap-2 transition-colors cursor-pointer"
                                     >
@@ -1185,6 +1235,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                     >
                                       <span className="material-symbols-outlined text-[16px] text-[#031635]">visibility</span>
                                       <span>View Attendance</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        setOpenMenuLectureId(null);
+                                        handleOpenEditLecture(lec);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#031635] hover:bg-[#f8f9fa] flex items-center gap-2 transition-colors cursor-pointer"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] text-[#031635]">edit</span>
+                                      <span>Edit Lecture</span>
                                     </button>
 
                                     <button
@@ -1216,6 +1277,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                     <button
                                       onClick={() => {
                                         setOpenMenuLectureId(null);
+                                        handleOpenEditLecture(lec);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#031635] hover:bg-[#f8f9fa] flex items-center gap-2 transition-colors cursor-pointer"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] text-[#031635]">edit</span>
+                                      <span>Edit Lecture</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        setOpenMenuLectureId(null);
                                         setShowReportsModal(true);
                                       }}
                                       className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#031635] hover:bg-[#f8f9fa] flex items-center gap-2 transition-colors cursor-pointer"
@@ -1227,12 +1299,23 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                     <button
                                       onClick={() => {
                                         setOpenMenuLectureId(null);
-                                        handleOpenDeleteLecture(lec);
+                                        handleOpenDeleteLecture(lec, 'archive');
                                       }}
                                       className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#723600] hover:bg-[#ffdcc6]/40 flex items-center gap-2 transition-colors cursor-pointer"
                                     >
-                                      <span className="material-symbols-outlined text-[16px] text-[#723600]">archive</span>
+                                      <span className="material-symbols-outlined text-[16px] text-[#723600]">inventory_2</span>
                                       <span>Archive from Schedule</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        setOpenMenuLectureId(null);
+                                        handleOpenDeleteLecture(lec, 'purge');
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#ba1a1a] hover:bg-[#ffdad6]/40 flex items-center gap-2 transition-colors cursor-pointer"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] text-[#ba1a1a]">delete_sweep</span>
+                                      <span>Delete Lecture & Records</span>
                                     </button>
                                   </>
                                 )}
@@ -1440,32 +1523,118 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       {/* MODAL 2: DELETE / ARCHIVE LECTURE CONFIRMATION MODAL */}
       {deletingLecture && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#e1e3e4] text-[#191c1d] flex flex-col gap-4 my-8">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#e1e3e4] text-[#191c1d] flex flex-col gap-4 my-8">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-[#ffdad6] text-[#ba1a1a] flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[24px]">warning</span>
+                <span className="material-symbols-outlined text-[24px]">delete_forever</span>
               </div>
               <div className="flex flex-col">
                 <h3 className="text-[18px] font-bold text-[#031635]">
-                  {deletingLecture.status === 'completed' || (deletingLecture.attendanceCount && deletingLecture.attendanceCount > 0)
-                    ? 'Archive Lecture from Schedule?'
-                    : 'Delete Lecture?'}
+                  {deletingLecture.status === 'upcoming' && (!deletingLecture.attendanceCount || deletingLecture.attendanceCount === 0)
+                    ? 'Delete Scheduled Lecture?'
+                    : 'Manage / Delete Lecture'}
                 </h3>
-                <span className="text-[12px] text-[#75777f]">Confirm lecture deletion</span>
+                <span className="text-[12px] text-[#75777f]">
+                  {deletingLecture.status === 'upcoming'
+                    ? 'Remove scheduled class from faculty calendar'
+                    : 'Select whether to archive or permanently delete lecture & attendance'}
+                </span>
               </div>
             </div>
 
             {/* Lecture Summary Box */}
             <div className="p-4 bg-[#f8f9fa] rounded-2xl border border-[#e1e3e4] flex flex-col gap-1.5 text-[12px]">
-              <div className="font-bold text-[14px] text-[#031635]">{deletingLecture.name}</div>
+              <div className="font-bold text-[14px] text-[#031635]">{deletingLecture.name} ({deletingLecture.code})</div>
               <div className="text-[#44474e]">{deletingLecture.className || 'BCA-A'} • {deletingLecture.room}</div>
               <div className="text-[#75777f]">{deletingLecture.timeSlot} • {deletingLecture.date || '2026-08-20'}</div>
+              <div className="text-[#031635] font-semibold flex items-center gap-1.5 mt-1 pt-1 border-t border-[#e1e3e4]">
+                <span className="material-symbols-outlined text-[15px] text-[#031635]">group</span>
+                <span>Attendance Count: {deletingLecture.attendanceCount ?? 0} students recorded</span>
+              </div>
             </div>
 
-            {deleteError ? (
-              <div className="p-3 bg-[#ffdad6] text-[#ba1a1a] rounded-xl text-[12px] font-bold flex items-center gap-2 border border-[#ba1a1a]/20">
-                <span className="material-symbols-outlined text-[18px]">error</span>
-                <span>{deleteError}</span>
+            {/* If Lecture has Attendance records or is Completed -> Give options */}
+            {(deletingLecture.status === 'completed' || (deletingLecture.attendanceCount && deletingLecture.attendanceCount > 0)) ? (
+              <div className="flex flex-col gap-2.5">
+                <span className="text-[12px] font-bold text-[#44474e]">Choose Action:</span>
+
+                {/* Option 1: Archive */}
+                <label
+                  onClick={() => setDeleteMode('archive')}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                    deleteMode === 'archive'
+                      ? 'bg-[#eef2ff] border-[#031635] ring-1 ring-[#031635]'
+                      : 'bg-[#f8f9fa] border-[#e1e3e4] hover:bg-white'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="deleteChoice"
+                    checked={deleteMode === 'archive'}
+                    onChange={() => setDeleteMode('archive')}
+                    className="mt-1 accent-[#031635] cursor-pointer"
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[13px] font-bold text-[#031635] flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">inventory_2</span>
+                      <span>Archive Lecture (Preserve Attendance Records)</span>
+                    </span>
+                    <span className="text-[11px] text-[#44474e]">
+                      Removes the lecture card from your active schedule, but retains historical attendance, student scores, and audit logs.
+                    </span>
+                  </div>
+                </label>
+
+                {/* Option 2: Delete Whole Lecture & Attendance */}
+                <label
+                  onClick={() => setDeleteMode('purge')}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+                    deleteMode === 'purge'
+                      ? 'bg-[#ffdad6]/40 border-[#ba1a1a] ring-1 ring-[#ba1a1a]'
+                      : 'bg-[#f8f9fa] border-[#e1e3e4] hover:bg-white'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="deleteChoice"
+                    checked={deleteMode === 'purge'}
+                    onChange={() => setDeleteMode('purge')}
+                    className="mt-1 accent-[#ba1a1a] cursor-pointer"
+                  />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[13px] font-bold text-[#ba1a1a] flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
+                      <span>Permanently Delete Lecture & Associated Attendance</span>
+                    </span>
+                    <span className="text-[11px] text-[#75777f]">
+                      Completely purges this lecture and purges all student attendance history entries taken for this session.
+                    </span>
+                  </div>
+                </label>
+
+                {/* Warning and Checkbox when Purge is selected */}
+                {deleteMode === 'purge' && (
+                  <div className="p-3 bg-[#ffdad6] border border-[#ba1a1a]/30 rounded-2xl flex flex-col gap-2 animate-in fade-in">
+                    <div className="flex items-center gap-1.5 text-[#ba1a1a] text-[12px] font-bold">
+                      <span className="material-symbols-outlined text-[18px]">warning</span>
+                      <span>Permanent Deletion Warning</span>
+                    </div>
+                    <span className="text-[11px] text-[#410002]">
+                      This action cannot be undone. All student attendance records and logs tied to this lecture will be removed.
+                    </span>
+                    <label className="flex items-center gap-2 mt-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={confirmPurgeAttendance}
+                        onChange={(e) => setConfirmPurgeAttendance(e.target.checked)}
+                        className="w-4 h-4 accent-[#ba1a1a] rounded cursor-pointer"
+                      />
+                      <span className="text-[12px] font-bold text-[#ba1a1a]">
+                        I confirm permanent deletion of this lecture and its attendance records
+                      </span>
+                    </label>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-3 bg-[#fffaf0] border border-[#ffdcc6] rounded-xl text-[12px] text-[#723600] flex flex-col gap-1">
@@ -1474,13 +1643,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   <span>Removal Notice</span>
                 </span>
                 <span>
-                  This will remove the scheduled lecture from your dashboard. Attendance records that have already been finalized must not be silently deleted.
+                  This will permanently delete this upcoming lecture from your calendar and timetable.
                 </span>
-                {(deletingLecture.status === 'completed' || (deletingLecture.attendanceCount && deletingLecture.attendanceCount > 0)) && (
-                  <span className="font-bold text-[#005312] mt-1">
-                    ✓ Attendance records are preserved for audit purposes.
-                  </span>
-                )}
+              </div>
+            )}
+
+            {deleteError && (
+              <div className="p-3 bg-[#ffdad6] text-[#ba1a1a] rounded-xl text-[12px] font-bold flex items-center gap-2 border border-[#ba1a1a]/20">
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                <span>{deleteError}</span>
               </div>
             )}
 
@@ -1493,18 +1664,35 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 Cancel
               </button>
 
-              {deletingLecture.status !== 'active' && (
+              {deletingLecture.status !== 'active' ? (
                 <button
                   type="button"
                   onClick={handleConfirmDelete}
-                  className="px-5 py-2.5 bg-[#ba1a1a] text-white hover:bg-[#93000a] rounded-xl font-bold text-[13px] transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+                  className={`px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                    deleteMode === 'archive'
+                      ? 'bg-[#031635] text-white hover:bg-[#1a2b4b]'
+                      : 'bg-[#ba1a1a] text-white hover:bg-[#93000a]'
+                  }`}
                 >
                   <span className="material-symbols-outlined text-[18px]">
-                    {deletingLecture.status === 'completed' ? 'archive' : 'delete'}
+                    {deleteMode === 'archive' ? 'archive' : 'delete_forever'}
                   </span>
                   <span>
-                    {deletingLecture.status === 'completed' ? 'Archive Lecture' : 'Delete Lecture'}
+                    {deleteMode === 'archive' ? 'Archive Lecture' : 'Delete Lecture & Attendance'}
                   </span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onEndAttendance) onEndAttendance(deletingLecture.id);
+                    setDeletingLecture(null);
+                    showToast('✓ Attendance finalized. You can now delete or archive this lecture.');
+                  }}
+                  className="px-5 py-2.5 bg-[#ba1a1a] text-white hover:bg-[#93000a] rounded-xl font-bold text-[13px] transition-all cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[18px]">stop_circle</span>
+                  <span>End Session & Manage</span>
                 </button>
               )}
             </div>

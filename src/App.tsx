@@ -5,6 +5,7 @@ import {
   INITIAL_ATTENDANCE_HISTORY,
   MOCK_CLASS_STUDENTS,
   INITIAL_AUDIT_LOGS,
+  MOCK_STUDY_MATERIALS,
   generateUniqueId,
 } from './data/mockData';
 import {
@@ -15,6 +16,7 @@ import {
   StudentAttendanceItem,
   AuditLogEntry,
   AttendanceStatus,
+  StudyMaterial,
 } from './types';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -25,6 +27,7 @@ import { AdminLogin } from './components/AdminLogin';
 import { StudentVerification } from './components/StudentVerification';
 import { StudentHistory } from './components/StudentHistory';
 import { StudentProfileView } from './components/StudentProfile';
+import { StudentStudyMaterials } from './components/StudentStudyMaterials';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { AdminPortal } from './components/AdminPortal';
 import { CorrectionModal } from './components/CorrectionModal';
@@ -41,10 +44,14 @@ export default function App() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
   // Student State
-  const [studentTab, setStudentTab] = useState<'home' | 'history' | 'profile'>('home');
+  const [studentTab, setStudentTab] = useState<'home' | 'history' | 'materials' | 'profile'>('home');
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [studentData, setStudentData] = useState<StudentProfile>(CURRENT_STUDENT);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE_HISTORY);
+
+  // Study Materials State (Shared across student and teacher workspaces)
+  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>(MOCK_STUDY_MATERIALS);
+  const [selectedMaterialSubject, setSelectedMaterialSubject] = useState<string | null>(null);
 
   // Modals
   const [correctionTargetRecord, setCorrectionTargetRecord] = useState<AttendanceRecord | null>(null);
@@ -114,7 +121,7 @@ export default function App() {
     setAuditLogs((prev) => [auditEntry, ...prev]);
   };
 
-  const handleDeleteLecture = (lectureId: string, isArchive = false) => {
+  const handleDeleteLecture = (lectureId: string, isArchive = false, deleteAttendance = true) => {
     const targetLecture = lectures.find((l) => l.id === lectureId);
     if (!targetLecture) return;
 
@@ -132,29 +139,55 @@ export default function App() {
         entityId: lectureId,
         previousState: 'COMPLETED_SCHEDULE',
         newState: 'ARCHIVED (Attendance Preserved)',
-        reason: `Faculty archived completed lecture ${targetLecture.name}; records preserved`,
+        reason: `Faculty archived lecture ${targetLecture.name}; historical attendance records preserved`,
         ipAddress: '10.0.1.15'
       };
       setAuditLogs((prev) => [auditEntry, ...prev]);
     } else {
+      // Permanently remove the lecture
       setLectures((prev) => prev.filter((l) => l.id !== lectureId));
+
+      // If deleteAttendance is true, purge the corresponding attendance history records
+      if (deleteAttendance) {
+        setAttendanceHistory((prev) =>
+          prev.filter((r) => r.lectureId !== lectureId && r.lectureCode !== targetLecture.code)
+        );
+        // Also recalculate subject attendance metrics for the student profile
+        setStudentData((prev) => {
+          const updatedSubjects = prev.subjectBreakdown.map((sub) => {
+            if (sub.code === targetLecture.code) {
+              const newTotal = Math.max(0, sub.totalLectures - 1);
+              const newPresent = Math.min(sub.present, newTotal);
+              const newPercentage = newTotal > 0 ? Math.round((newPresent / newTotal) * 100) : 0;
+              return { ...sub, totalLectures: newTotal, present: newPresent, percentage: newPercentage };
+            }
+            return sub;
+          });
+          const totalPresent = updatedSubjects.reduce((acc, s) => acc + s.present, 0);
+          const totalLectures = updatedSubjects.reduce((acc, s) => acc + s.totalLectures, 0);
+          const overall = totalLectures > 0 ? Math.round((totalPresent / totalLectures) * 100) : 0;
+          return { ...prev, subjectBreakdown: updatedSubjects, overallAttendance: overall };
+        });
+      }
+
       if (activeLectureId === lectureId) {
         const remaining = lectures.filter((l) => l.id !== lectureId);
         if (remaining.length > 0) {
           setActiveLectureId(remaining[0].id);
         }
       }
+
       const auditEntry: AuditLogEntry = {
         id: generateUniqueId('aud'),
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
         actor: 'prof.sharma@springfield.edu',
         role: 'TEACHER',
-        action: 'LECTURE_DELETED',
+        action: 'LECTURE_PERMANENTLY_DELETED',
         entity: 'Lecture',
         entityId: lectureId,
-        previousState: 'UPCOMING_SCHEDULED',
-        newState: 'DELETED',
-        reason: `Faculty deleted scheduled lecture ${targetLecture.name}`,
+        previousState: targetLecture.status.toUpperCase(),
+        newState: 'PERMANENTLY_DELETED',
+        reason: `Faculty permanently deleted lecture ${targetLecture.name} and associated attendance records`,
         ipAddress: '10.0.1.15'
       };
       setAuditLogs((prev) => [auditEntry, ...prev]);
@@ -174,9 +207,61 @@ export default function App() {
       action: 'ATTENDANCE_SESSION_FINALIZED',
       entity: 'Lecture',
       entityId: lectureId,
-      previousState: 'ACTIVE_INGEST',
-      newState: 'FINALIZED',
-      reason: `Faculty closed live attendance window for ${targetLecture?.name || lectureId}`,
+      newState: 'COMPLETED',
+      reason: `Faculty ended live attendance capture for ${targetLecture?.name || 'Lecture'}`,
+      ipAddress: '10.0.1.15'
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
+  };
+
+  // Study Materials Handlers
+  const handleAddStudyMaterial = (newMaterial: StudyMaterial) => {
+    setStudyMaterials((prev) => [newMaterial, ...prev]);
+    const auditEntry: AuditLogEntry = {
+      id: generateUniqueId('aud'),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      actor: 'prof.sharma@springfield.edu',
+      role: 'TEACHER',
+      action: 'STUDY_MATERIAL_PUBLISHED',
+      entity: 'StudyMaterial',
+      entityId: newMaterial.id,
+      newState: `${newMaterial.subjectCode} - ${newMaterial.title}`,
+      reason: `Faculty published new ${newMaterial.type.toUpperCase()} resource: ${newMaterial.title}`,
+      ipAddress: '10.0.1.15'
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
+  };
+
+  const handleUpdateStudyMaterial = (updatedMaterial: StudyMaterial) => {
+    setStudyMaterials((prev) => prev.map((m) => (m.id === updatedMaterial.id ? updatedMaterial : m)));
+    const auditEntry: AuditLogEntry = {
+      id: generateUniqueId('aud'),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      actor: 'prof.sharma@springfield.edu',
+      role: 'TEACHER',
+      action: 'STUDY_MATERIAL_UPDATED',
+      entity: 'StudyMaterial',
+      entityId: updatedMaterial.id,
+      newState: `${updatedMaterial.subjectCode} - ${updatedMaterial.title}`,
+      reason: `Faculty updated study material details for ${updatedMaterial.title}`,
+      ipAddress: '10.0.1.15'
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
+  };
+
+  const handleDeleteStudyMaterial = (materialId: string) => {
+    const target = studyMaterials.find((m) => m.id === materialId);
+    setStudyMaterials((prev) => prev.filter((m) => m.id !== materialId));
+    const auditEntry: AuditLogEntry = {
+      id: generateUniqueId('aud'),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      actor: 'prof.sharma@springfield.edu',
+      role: 'TEACHER',
+      action: 'STUDY_MATERIAL_DELETED',
+      entity: 'StudyMaterial',
+      entityId: materialId,
+      newState: 'DELETED',
+      reason: `Faculty deleted study resource: ${target?.title || materialId}`,
       ipAddress: '10.0.1.15'
     };
     setAuditLogs((prev) => [auditEntry, ...prev]);
@@ -392,6 +477,10 @@ export default function App() {
                     attendanceHistory={attendanceHistory}
                     onStartVerification={() => setIsVerifying(true)}
                     onNavigateHistory={() => setStudentTab('history')}
+                    onNavigateMaterials={(subjectCode?: string) => {
+                      setSelectedMaterialSubject(subjectCode || null);
+                      setStudentTab('materials');
+                    }}
                     onNavigateProfile={() => setStudentTab('profile')}
                     onRequestCorrection={(rec) => setCorrectionTargetRecord(rec)}
                   />
@@ -407,6 +496,18 @@ export default function App() {
                   />
                 )}
 
+                {studentTab === 'materials' && (
+                  <StudentStudyMaterials
+                    student={studentData}
+                    materials={studyMaterials}
+                    initialSubjectCode={selectedMaterialSubject || undefined}
+                    onNavigateHome={() => setStudentTab('home')}
+                    onNavigateHistory={() => setStudentTab('history')}
+                    onNavigateProfile={() => setStudentTab('profile')}
+                    onBack={() => setStudentTab('home')}
+                  />
+                )}
+
                 {studentTab === 'profile' && (
                   <StudentProfileView
                     student={studentData}
@@ -418,7 +519,10 @@ export default function App() {
                 {/* Mobile Bottom Navigation Bar */}
                 <BottomNav
                   currentTab={studentTab}
-                  onSelectTab={(tab) => setStudentTab(tab)}
+                  onSelectTab={(tab) => {
+                    setSelectedMaterialSubject(null);
+                    setStudentTab(tab);
+                  }}
                 />
               </>
             )}
@@ -446,6 +550,10 @@ export default function App() {
               onUpdateStudentStatus={handleTeacherOverride}
               onNavigateHome={() => setCurrentRole('student')}
               onLogout={() => setIsTeacherLoggedIn(false)}
+              studyMaterials={studyMaterials}
+              onAddStudyMaterial={handleAddStudyMaterial}
+              onUpdateStudyMaterial={handleUpdateStudyMaterial}
+              onDeleteStudyMaterial={handleDeleteStudyMaterial}
             />
           )
         )}

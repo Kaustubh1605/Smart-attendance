@@ -26,6 +26,7 @@ interface StudentHomeProps {
   attendanceHistory?: AttendanceRecord[];
   onStartVerification: () => void;
   onNavigateHistory: () => void;
+  onNavigateMaterials?: (subjectCode?: string) => void;
   onNavigateProfile: () => void;
   onRequestCorrection?: (record: AttendanceRecord) => void;
 }
@@ -37,6 +38,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   attendanceHistory = [],
   onStartVerification,
   onNavigateHistory,
+  onNavigateMaterials,
   onNavigateProfile,
   onRequestCorrection,
 }) => {
@@ -75,6 +77,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         student={student}
         records={attendanceHistory}
         onBack={() => setSelectedSubject(null)}
+        onNavigateMaterials={onNavigateMaterials}
         onRequestCorrection={(rec) => {
           setSelectedSubject(null);
           if (onRequestCorrection) {
@@ -304,6 +307,34 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               );
             })}
           </div>
+        </div>
+
+        {/* Quick Access: Study Materials, PDFs & PPTs */}
+        <div
+          onClick={onNavigateMaterials}
+          className="bg-gradient-to-r from-[#031635] to-[#12284c] rounded-2xl p-3.5 text-white shadow-xs flex items-center justify-between cursor-pointer hover:shadow-md transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 text-[#a0f399] flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-[22px]">menu_book</span>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[12px] font-bold text-white group-hover:text-[#a0f399] transition-colors">
+                  Subject Study Materials & PPTs
+                </span>
+                <span className="text-[9px] font-extrabold bg-[#a0f399] text-[#005312] px-1.5 py-0.2 rounded-full uppercase">
+                  Updated
+                </span>
+              </div>
+              <span className="text-[10px] text-[#b6c6ef]">
+                Access PDFs, lecture slides, lab manuals & notes per subject
+              </span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-[20px] text-[#b6c6ef] group-hover:text-white group-hover:translate-x-0.5 transition-all">
+            chevron_right
+          </span>
         </div>
 
         {/* Upcoming Lectures Today */}

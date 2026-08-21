@@ -2,6 +2,26 @@ export type UserRole = 'student' | 'teacher' | 'admin';
 
 export type AttendanceStatus = 'present' | 'probable' | 'needs_review' | 'absent';
 
+export interface StudyMaterial {
+  id: string;
+  title: string;
+  subjectCode: string;
+  subjectName: string;
+  className: string;
+  instructor: string;
+  type: 'pdf' | 'ppt' | 'notes' | 'lab' | 'assignment' | 'link';
+  unitOrTopic: string;
+  description?: string;
+  fileName: string;
+  fileSize?: string;
+  fileUrl?: string;
+  uploadedAt: string;
+  downloadCount?: number;
+  tags?: string[];
+  externalUrl?: string;
+  isBookmarked?: boolean;
+}
+
 export type VerificationResultStatus =
   | 'verified_present'
   | 'probable_present'

@@ -16,7 +16,8 @@ import {
   VisualVerificationFeed,
   OfflineLectureSession,
   OfflineRosterStudent,
-  OfflineSyncSessionItem
+  OfflineSyncSessionItem,
+  StudyMaterial
 } from '../types';
 
 let globalUniqueCounter = 0;
@@ -1090,3 +1091,256 @@ export const MOCK_VISUAL_FEED: VisualVerificationFeed = {
     { name: 'Rohan Gupta', studentId: 'STU-2023-8844', status: 'face_obscured', confidence: 32 }
   ]
 };
+
+export const MOCK_STUDY_MATERIALS: StudyMaterial[] = [
+  // Database Systems (BCA 301)
+  {
+    id: 'mat-db-01',
+    title: 'Unit 1: Introduction to DBMS & Relational Model',
+    subjectCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    className: 'BCA-A',
+    instructor: 'Prof. Sharma',
+    type: 'pdf',
+    unitOrTopic: 'Unit 1: Architecture & Relational Algebra',
+    description: 'Comprehensive study notes on 3-tier ANSI/SPARC architecture, Data Independence, ER-to-Relational mapping and Tuple Calculus.',
+    fileName: 'DBMS_Unit1_Relational_Algebra_Notes.pdf',
+    fileSize: '3.8 MB',
+    uploadedAt: '2026-08-15',
+    downloadCount: 48,
+    tags: ['DBMS', 'Relational Model', 'ER Diagram', 'Unit 1']
+  },
+  {
+    id: 'mat-db-02',
+    title: 'Unit 2: SQL Query Optimization & Indexing Slides',
+    subjectCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    className: 'BCA-A',
+    instructor: 'Prof. Sharma',
+    type: 'ppt',
+    unitOrTopic: 'Unit 2: Query Execution & Indexing',
+    description: 'Lecture slides covering B+ Trees, Hashing, Clustered vs Non-Clustered Indexes, EXPLAIN ANALYZE and Cost-Based Optimization.',
+    fileName: 'DBMS_Unit2_Indexing_and_Opt_Deck.pptx',
+    fileSize: '8.4 MB',
+    uploadedAt: '2026-08-18',
+    downloadCount: 52,
+    tags: ['SQL', 'Indexing', 'B+ Trees', 'Optimization', 'Slides']
+  },
+  {
+    id: 'mat-db-03',
+    title: 'Lab Manual: PostgreSQL Complex Joins & Triggers',
+    subjectCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    className: 'BCA-A',
+    instructor: 'Prof. Sharma',
+    type: 'lab',
+    unitOrTopic: 'Lab Practical Exercises 1-6',
+    description: 'Laboratory assignments on PL/pgSQL stored procedures, AFTER/BEFORE triggers, materialized views, and foreign key constraints.',
+    fileName: 'DBMS_Lab_Manual_Postgres_2026.pdf',
+    fileSize: '2.4 MB',
+    uploadedAt: '2026-08-10',
+    downloadCount: 44,
+    tags: ['Lab', 'PostgreSQL', 'Triggers', 'Stored Procedures']
+  },
+  {
+    id: 'mat-db-04',
+    title: 'Unit 3: ACID Transactions & Concurrency Control Handout',
+    subjectCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    className: 'BCA-A',
+    instructor: 'Prof. Sharma',
+    type: 'notes',
+    unitOrTopic: 'Unit 3: Transactions & Recovery',
+    description: 'Deep dive into 2PL (Two-Phase Locking), Deadlock prevention graphs, Write-Ahead Logging (WAL), and ARIES recovery protocol.',
+    fileName: 'DBMS_ACID_Concurrency_Handout.pdf',
+    fileSize: '1.9 MB',
+    uploadedAt: '2026-08-19',
+    downloadCount: 39,
+    tags: ['ACID', 'Concurrency', '2PL', 'WAL']
+  },
+
+  // Data Structures & Algorithms (BCA 302)
+  {
+    id: 'mat-dsa-01',
+    title: 'Unit 1: Asymptotic Complexity & Master Theorem',
+    subjectCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    className: 'BCA-A',
+    instructor: 'Prof. Mehta',
+    type: 'pdf',
+    unitOrTopic: 'Unit 1: Algorithm Analysis',
+    description: 'Formal Big-O, Big-Omega, Big-Theta definitions, recursion tree solutions, and Master Theorem substitution cases.',
+    fileName: 'DSA_Unit1_Asymptotic_Analysis.pdf',
+    fileSize: '3.1 MB',
+    uploadedAt: '2026-08-12',
+    downloadCount: 61,
+    tags: ['Complexity', 'Big-O', 'Master Theorem', 'Unit 1']
+  },
+  {
+    id: 'mat-dsa-02',
+    title: 'Unit 2: Balanced Trees (AVL, Red-Black & B-Trees) Lecture Deck',
+    subjectCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    className: 'BCA-A',
+    instructor: 'Prof. Mehta',
+    type: 'ppt',
+    unitOrTopic: 'Unit 2: Advanced Tree Structures',
+    description: 'Visual step-by-step rotations (LL, RR, LR, RL), Red-Black tree recoloring cases, and B-Tree node split algorithms.',
+    fileName: 'DSA_Unit2_Balanced_Trees_Deck.pptx',
+    fileSize: '12.6 MB',
+    uploadedAt: '2026-08-16',
+    downloadCount: 57,
+    tags: ['AVL', 'Red-Black', 'Trees', 'Slides']
+  },
+  {
+    id: 'mat-dsa-03',
+    title: 'Unit 3: Graph Algorithms (BFS, DFS, Dijkstra, Bellman-Ford)',
+    subjectCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    className: 'BCA-A',
+    instructor: 'Prof. Mehta',
+    type: 'pdf',
+    unitOrTopic: 'Unit 3: Graph Traversal & Shortest Path',
+    description: 'Shortest path algorithms, Minimum Spanning Trees (Kruskal, Prim), and topological sorting with pseudocode and proofs.',
+    fileName: 'DSA_Graph_Algorithms_Reference.pdf',
+    fileSize: '4.7 MB',
+    uploadedAt: '2026-08-17',
+    downloadCount: 50,
+    tags: ['Graphs', 'Dijkstra', 'MST', 'BFS/DFS']
+  },
+  {
+    id: 'mat-dsa-04',
+    title: 'Assignment 2: Dynamic Programming Problem Set',
+    subjectCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    className: 'BCA-A',
+    instructor: 'Prof. Mehta',
+    type: 'assignment',
+    unitOrTopic: 'Unit 4: Dynamic Programming',
+    description: '10 problems on 0/1 Knapsack, Longest Common Subsequence, Matrix Chain Multiplication and Edit Distance with memoization tables.',
+    fileName: 'DSA_Assignment2_DP_Problems.pdf',
+    fileSize: '1.2 MB',
+    uploadedAt: '2026-08-19',
+    downloadCount: 43,
+    tags: ['DP', 'Assignment', 'Knapsack', 'LCS']
+  },
+
+  // Operating Systems & Networks (BCA 304)
+  {
+    id: 'mat-os-01',
+    title: 'Unit 1: CPU Scheduling & Process Synchronization Deck',
+    subjectCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    className: 'BCA-A',
+    instructor: 'Dr. V. Kulkarni',
+    type: 'ppt',
+    unitOrTopic: 'Unit 1: Process & CPU Scheduling',
+    description: 'FCFS, SJF, Round Robin, Multilevel Queue Scheduling, Semaphores, Mutex locks, and Producer-Consumer problem solutions.',
+    fileName: 'OS_Unit1_CPU_Scheduling_Slides.pptx',
+    fileSize: '9.2 MB',
+    uploadedAt: '2026-08-11',
+    downloadCount: 54,
+    tags: ['OS', 'CPU Scheduling', 'Semaphores', 'Slides']
+  },
+  {
+    id: 'mat-os-02',
+    title: 'Unit 2: Virtual Memory & Page Replacement Algorithms',
+    subjectCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    className: 'BCA-A',
+    instructor: 'Dr. V. Kulkarni',
+    type: 'pdf',
+    unitOrTopic: 'Unit 2: Memory Management',
+    description: 'Paging, TLB Translation, Inverted Page Tables, FIFO vs LRU vs Optimal Page Replacement, and Thrashing resolution.',
+    fileName: 'OS_Virtual_Memory_Paging_Notes.pdf',
+    fileSize: '4.1 MB',
+    uploadedAt: '2026-08-14',
+    downloadCount: 46,
+    tags: ['Paging', 'Virtual Memory', 'LRU', 'Notes']
+  },
+  {
+    id: 'mat-os-03',
+    title: 'Unit 3: Computer Networks OSI vs TCP/IP Protocol Stack',
+    subjectCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    className: 'BCA-A',
+    instructor: 'Dr. V. Kulkarni',
+    type: 'pdf',
+    unitOrTopic: 'Unit 3: Networking Protocols',
+    description: 'Detailed analysis of IPv4/IPv6 subnetting, CIDR, TCP 3-way handshake, Flow Control (Sliding Window), and Congestion Control.',
+    fileName: 'Networks_TCP_IP_Subnetting_Guide.pdf',
+    fileSize: '5.6 MB',
+    uploadedAt: '2026-08-18',
+    downloadCount: 41,
+    tags: ['Networking', 'TCP/IP', 'Subnetting', 'Protocols']
+  },
+
+  // Linear Algebra & Statistics (MATH 202)
+  {
+    id: 'mat-math-01',
+    title: 'Unit 1: Vector Spaces, Subspaces & Eigenvalue Decomposition',
+    subjectCode: 'MATH 202',
+    subjectName: 'Linear Algebra & Statistics',
+    className: 'BCA-A',
+    instructor: 'Dr. R. Deshmukh',
+    type: 'pdf',
+    unitOrTopic: 'Unit 1: Linear Transformations',
+    description: 'Row reduction echelon forms (RREF), Matrix Rank, Determinants, Characteristic Polynomials, Eigenvectors and Diagonalization.',
+    fileName: 'Math_Eigenvalues_Diagonalization_Notes.pdf',
+    fileSize: '4.8 MB',
+    uploadedAt: '2026-08-13',
+    downloadCount: 38,
+    tags: ['Linear Algebra', 'Eigenvalues', 'Matrices', 'Notes']
+  },
+  {
+    id: 'mat-math-02',
+    title: 'Formula Cheat Sheet: Statistical Distributions & Hypotheses',
+    subjectCode: 'MATH 202',
+    subjectName: 'Linear Algebra & Statistics',
+    className: 'BCA-A',
+    instructor: 'Dr. R. Deshmukh',
+    type: 'notes',
+    unitOrTopic: 'Unit 2: Probability & Inferential Stats',
+    description: 'Summary sheet of Binomial, Poisson, Normal, Student t-test, Chi-Square test, and ANOVA formulas with p-value tables.',
+    fileName: 'Stats_Distributions_CheatSheet_2026.pdf',
+    fileSize: '1.4 MB',
+    uploadedAt: '2026-08-17',
+    downloadCount: 65,
+    tags: ['Cheat Sheet', 'Statistics', 'Formulas', 'Probability']
+  },
+
+  // Design & Professional Ethics (ENG 101)
+  {
+    id: 'mat-eng-01',
+    title: 'Unit 1: Engineering Ethics, Whistleblowing & Intellectual Property',
+    subjectCode: 'ENG 101',
+    subjectName: 'Design & Professional Ethics',
+    className: 'BCA-A',
+    instructor: 'Prof. S. Sen',
+    type: 'ppt',
+    unitOrTopic: 'Unit 1: Moral Frameworks & IP Law',
+    description: 'Slides on Utilitarian vs Deontological ethics, Patents vs Copyrights, Open Source licensing (MIT/GPL), and IEEE/ACM Codes.',
+    fileName: 'Ethics_Unit1_Moral_Frameworks_Deck.pptx',
+    fileSize: '6.9 MB',
+    uploadedAt: '2026-08-09',
+    downloadCount: 32,
+    tags: ['Ethics', 'IP Law', 'Patents', 'Slides']
+  },
+  {
+    id: 'mat-eng-02',
+    title: 'Case Study: AI Ethics & Autonomous Decision Systems',
+    subjectCode: 'ENG 101',
+    subjectName: 'Design & Professional Ethics',
+    className: 'BCA-A',
+    instructor: 'Prof. S. Sen',
+    type: 'pdf',
+    unitOrTopic: 'Unit 2: Technology & Society',
+    description: 'Readings and discussion questions on algorithmic bias, data privacy, surveillance capitalism, and autonomous vehicle dilemma.',
+    fileName: 'AI_Ethics_Case_Studies_Compendium.pdf',
+    fileSize: '2.8 MB',
+    uploadedAt: '2026-08-16',
+    downloadCount: 29,
+    tags: ['AI Ethics', 'Case Study', 'Privacy']
+  }
+];
+

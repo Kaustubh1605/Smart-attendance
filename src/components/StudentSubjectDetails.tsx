@@ -8,6 +8,7 @@ interface StudentSubjectDetailsProps {
   records: AttendanceRecord[];
   onBack: () => void;
   onRequestCorrection: (record: AttendanceRecord) => void;
+  onNavigateMaterials?: (subjectCode: string) => void;
 }
 
 export const StudentSubjectDetails: React.FC<StudentSubjectDetailsProps> = ({
@@ -16,6 +17,7 @@ export const StudentSubjectDetails: React.FC<StudentSubjectDetailsProps> = ({
   records,
   onBack,
   onRequestCorrection,
+  onNavigateMaterials,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'present' | 'absent' | 'needs_review'>('all');
 
@@ -154,6 +156,17 @@ export const StudentSubjectDetails: React.FC<StudentSubjectDetailsProps> = ({
               <span className="text-[16px] font-bold text-[#723600]">{subject.needsReview}</span>
             </div>
           </div>
+
+          {/* Quick Access to Subject Study Materials */}
+          {onNavigateMaterials && (
+            <button
+              onClick={() => onNavigateMaterials(subject.code)}
+              className="mt-2.5 w-full py-2.5 px-3 bg-[#eef2ff] hover:bg-[#d8e2ff] border border-[#d8e2ff] text-[#031635] rounded-xl text-[12px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+            >
+              <span className="material-symbols-outlined text-[18px]">menu_book</span>
+              <span>View {subject.code} Study Materials & PPTs</span>
+            </button>
+          )}
         </div>
 
         {/* Attendance Records for this Subject */}
