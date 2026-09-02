@@ -15,14 +15,15 @@ export const RegistrationPage = () => {
     e.preventDefault();
     setStatus('LOADING');
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role })
       });
       const data = await response.json();
       
-      if (!response.ok) {
+      if (!response.ok || data.success === false) {
         throw new Error(data.message || 'Registration failed');
       }
       
