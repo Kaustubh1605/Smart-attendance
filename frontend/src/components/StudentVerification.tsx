@@ -62,7 +62,7 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
   }, [lecture.id, lecture.code]);
 
   // Execute verification attempt through authoritative QR & Multi-Factor Engine
-  const executeScan = (
+  const executeScan = async (
     challengeToUse: DynamicQRChallenge,
     attemptStartTime: number,
     processingDelayMs = 700,
@@ -72,9 +72,9 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
     setScanState('processing');
     setProcessingNote('Verifying 10s Dynamic Nonce & Multi-Factor Evidence...');
 
-    setTimeout(() => {
+    try {
       const completionTime = Date.now();
-      const result = validateAttendanceAttempt({
+      const attemptPayload = {
         studentId: student.studentId,
         studentName: student.name,
         deviceId: student.registeredDevice?.deviceId || 'DEV-BOUND-PIXEL8',
@@ -86,8 +86,17 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
         bleDetected: options?.bleDetected ?? true,
         locationStatus: locationVerified ? 'verified' : 'uncertain',
         distanceMeters: options?.distanceMeters ?? 6.2,
-      });
+      };
 
+      const response = await fetch('/api/qr/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(attemptPayload),
+      });
+      
+      const result = await response.json();
       setVerificationResult(result);
 
       if (result.success && result.challengeStatus === 'valid') {
@@ -110,7 +119,12 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
         );
         setScanState('expired');
       }
-    }, processingDelayMs);
+    } catch (error) {
+      console.error('QR Validation Error:', error);
+      setExpiredTokenCode(challengeToUse.token);
+      setExpiredErrorMessage('Network error while verifying QR. Please try again.');
+      setScanState('expired');
+    }
   };
 
   // Standard Live QR Scan (Attempt started at current timestamp)

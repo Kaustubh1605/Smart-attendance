@@ -19,6 +19,23 @@ import {
   InstitutionSettings,
 } from '../types';
 import { HelpSupportModal } from './HelpSupportModal';
+import { AttendanceTrendsChart } from './AttendanceTrendsChart';
+
+const MOCK_TREND_DATA = [
+  { date: 'Mon', attendanceRate: 85 },
+  { date: 'Tue', attendanceRate: 88 },
+  { date: 'Wed', attendanceRate: 82 },
+  { date: 'Thu', attendanceRate: 86 },
+  { date: 'Fri', attendanceRate: 89 },
+];
+
+const MOCK_AT_RISK_STUDENTS = [
+  { name: 'Alice Smith', studentId: 'S-1042', missedClasses: 12 },
+  { name: 'Bob Johnson', studentId: 'S-1043', missedClasses: 10 },
+  { name: 'Charlie Brown', studentId: 'S-1044', missedClasses: 8 },
+  { name: 'Diana Ross', studentId: 'S-1045', missedClasses: 7 },
+  { name: 'Eve Adams', studentId: 'S-1046', missedClasses: 6 },
+];
 
 interface AdminPortalProps {
   auditLogs: AuditLogEntry[];
@@ -81,6 +98,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch('/api/attendance/export', { method: 'GET' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'attendance_semester_report.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast('CSV Exported Successfully');
+      } else {
+        showToast('Failed to export CSV');
+      }
+    } catch (error) {
+      showToast('Error exporting CSV');
+    }
   };
 
   // Student Actions
@@ -320,6 +359,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-1.5 text-[12px] font-bold text-white bg-[#031635] hover:bg-[#1a2b4b] px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-md"
+              title="Download Full Attendance CSV"
+            >
+              <span className="material-symbols-outlined text-[16px]">download</span>
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
+
             <button
               onClick={() => setShowHelpModal(true)}
               className="flex items-center gap-1.5 text-[12px] font-semibold text-[#031635] bg-[#eef2ff] hover:bg-[#d8e2ff] px-3 py-1.5 rounded-xl border border-[#d8e2ff] transition-all cursor-pointer shadow-xs"
@@ -1693,6 +1741,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             >
               Save Configuration
             </button>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB: ANALYTICS
+           ======================================================== */}
+        {activeTab === 'analytics' && (
+          <div className="flex flex-col gap-5 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-[#e1e3e4] shadow-xs">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#031635]">Institutional Analytics</h2>
+                <p className="text-[12px] text-[#75777f]">Visualize attendance trends and identify at-risk students</p>
+              </div>
+            </div>
+            
+            <AttendanceTrendsChart 
+              trendData={MOCK_TREND_DATA} 
+              atRiskStudents={MOCK_AT_RISK_STUDENTS} 
+            />
           </div>
         )}
       </main>

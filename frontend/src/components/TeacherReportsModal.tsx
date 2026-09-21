@@ -23,9 +23,30 @@ export const TeacherReportsModal: React.FC<TeacherReportsModalProps> = ({
   const reviewCount = students.filter((s) => s.status === 'needs_review').length;
   const absentCount = students.filter((s) => s.status === 'absent').length;
 
-  const handleExportCSV = () => {
-    setDownloadSuccess(true);
-    setTimeout(() => setDownloadSuccess(false), 2000);
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch('/api/attendance/export', {
+        method: 'GET',
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'attendance_semester_report.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        
+        setDownloadSuccess(true);
+        setTimeout(() => setDownloadSuccess(false), 2000);
+      } else {
+        console.error('Failed to export CSV');
+      }
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+    }
   };
 
   return (

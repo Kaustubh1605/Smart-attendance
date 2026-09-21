@@ -10,6 +10,20 @@ import { HelpSupportModal } from './HelpSupportModal';
 import { TeacherOfflineAttendance } from './TeacherOfflineAttendance';
 import { TeacherStudyMaterials } from './TeacherStudyMaterials';
 import { generateDynamicQRChallenge } from '../services/qrVerificationService';
+import { AttendanceTrendsChart } from './AttendanceTrendsChart';
+
+const MOCK_TREND_DATA = [
+  { date: 'Mon', attendanceRate: 88 },
+  { date: 'Tue', attendanceRate: 91 },
+  { date: 'Wed', attendanceRate: 85 },
+  { date: 'Thu', attendanceRate: 89 },
+  { date: 'Fri', attendanceRate: 92 },
+];
+
+const MOCK_AT_RISK_STUDENTS = [
+  { name: 'David Lee', studentId: 'S-2011', missedClasses: 5 },
+  { name: 'Sarah Connor', studentId: 'S-2012', missedClasses: 4 },
+];
 
 interface TeacherDashboardProps {
   lectures: Lecture[];
@@ -45,8 +59,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   onUpdateStudyMaterial,
   onDeleteStudyMaterial,
 }) => {
-  // Navigation View: 'live' | 'events' | 'materials' | 'offline'
-  const [activeTab, setActiveTab] = useState<'live' | 'events' | 'materials' | 'offline'>('live');
+  // Navigation View: 'live' | 'events' | 'materials' | 'offline' | 'analytics'
+  const [activeTab, setActiveTab] = useState<'live' | 'events' | 'materials' | 'offline' | 'analytics'>('live');
   const [isInternetOnline] = useState<boolean>(false);
   const [sessionActive, setSessionActive] = useState(true);
   const [showProjectorQR, setShowProjectorQR] = useState(false);
@@ -614,6 +628,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <span className="bg-[#ffdcc6] text-[#723600] text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">
               Local Mesh
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+              activeTab === 'analytics'
+                ? 'bg-[#031635] text-white shadow-xs'
+                : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[17px] shrink-0">bar_chart</span>
+            <span className="truncate">Analytics</span>
           </button>
         </div>
 
@@ -1376,6 +1402,23 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 })}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB: ANALYTICS */}
+        {activeTab === 'analytics' && (
+          <div className="flex flex-col gap-5 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center bg-white p-5 rounded-3xl border border-[#e1e3e4] shadow-xs">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#031635]">Classroom Analytics</h2>
+                <p className="text-[12px] text-[#75777f]">Visualize attendance trends for your lectures and identify at-risk students</p>
+              </div>
+            </div>
+            
+            <AttendanceTrendsChart 
+              trendData={MOCK_TREND_DATA} 
+              atRiskStudents={MOCK_AT_RISK_STUDENTS} 
+            />
           </div>
         )}
       </main>

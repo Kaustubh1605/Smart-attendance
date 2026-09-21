@@ -12,9 +12,11 @@ import java.util.List;
 public class AttendanceService {
     
     private final AttendanceRepository attendanceRepository;
+    private final NotificationService notificationService;
 
-    public AttendanceService(AttendanceRepository attendanceRepository) {
+    public AttendanceService(AttendanceRepository attendanceRepository, NotificationService notificationService) {
         this.attendanceRepository = attendanceRepository;
+        this.notificationService = notificationService;
     }
 
     public List<AttendanceRecord> getAttendanceForLecture(String lectureId) {
@@ -34,6 +36,38 @@ public class AttendanceService {
         }
         
         record.setTimestamp(LocalDateTime.now());
+        
+        // Trigger notification if absent
+        if (record.getStatus() == AttendanceStatus.ABSENT) {
+            String studentEmail = (record.getStudent() != null && record.getStudent().getUser() != null) ? record.getStudent().getUser().getEmail() : "student@example.com";
+            String studentName = (record.getStudent() != null && record.getStudent().getUser() != null) ? record.getStudent().getUser().getName() : "Student";
+            String lectureCode = record.getLecture() != null ? record.getLecture().getCode() : "Lecture";
+            notificationService.sendAbsenceNotification(studentEmail, studentName, lectureCode, record.getTimestamp().toLocalDate().toString());
+        }
+        
         return attendanceRepository.save(record);
+    }
+
+    public String exportAllAttendanceToCsv() {
+        List<AttendanceRecord> records = attendanceRepository.findAll();
+        StringBuilder csv = new StringBuilder();
+        csv.append("Record ID,Student ID,Student Name,Lecture Code,Lecture Name,Class,Room,Status,Verification Time,Confidence Score\n");
+
+        for (AttendanceRecord record : records) {
+            String recordId = record.getId() != null ? record.getId() : "";
+            String studentId = record.getStudent() != null ? record.getStudent().getStudentId() : "";
+            String studentName = (record.getStudent() != null && record.getStudent().getUser() != null) ? record.getStudent().getUser().getName() : "";
+            String lectureCode = record.getLecture() != null ? record.getLecture().getCode() : "";
+            String lectureName = record.getLecture() != null ? record.getLecture().getName() : "";
+            String className = record.getLecture() != null ? record.getLecture().getClassName() : "";
+            String room = (record.getLecture() != null && record.getLecture().getClassroom() != null) ? record.getLecture().getClassroom().getName() : "";
+            String status = record.getStatus() != null ? record.getStatus().name() : "";
+            String verificationTime = record.getTimestamp() != null ? record.getTimestamp().toString() : "";
+            String confidenceScore = record.getConfidenceScore() != null ? String.valueOf(record.getConfidenceScore()) : "";
+
+            csv.append(String.format("%s,%s,\"%s\",%s,\"%s\",%s,\"%s\",%s,%s,%s\n",
+                    recordId, studentId, studentName, lectureCode, lectureName, className, room, status, verificationTime, confidenceScore));
+        }
+        return csv.toString();
     }
 }
