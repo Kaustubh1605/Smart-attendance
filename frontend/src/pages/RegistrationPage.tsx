@@ -6,7 +6,7 @@ export const RegistrationPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
+  const [role, setRole] = useState<'STUDENT' | 'TEACHER' | 'ADMIN'>('STUDENT');
   
   const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [errorMessage, setErrorMessage] = useState('');
@@ -15,8 +15,8 @@ export const RegistrationPage = () => {
     e.preventDefault();
     setStatus('LOADING');
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/v1/auth/register`, {
+      // Use relative path to let Vite proxy handle it
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role })
@@ -117,6 +117,10 @@ export const RegistrationPage = () => {
               <label className="flex items-center gap-2 cursor-pointer font-bold text-sm">
                 <input type="radio" checked={role === 'TEACHER'} onChange={() => setRole('TEACHER')} className="w-4 h-4 accent-[#031635]" />
                 <span>Teacher</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer font-bold text-sm">
+                <input type="radio" checked={role === 'ADMIN'} onChange={() => setRole('ADMIN')} className="w-4 h-4 accent-[#031635]" />
+                <span>Admin</span>
               </label>
             </div>
           </div>

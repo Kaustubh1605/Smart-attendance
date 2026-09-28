@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LOGO_URL } from '../data/mockData';
 
 interface TeacherLoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (name: string, email: string, token: string) => void;
   onSwitchToStudent?: () => void;
   onSwitchToAdmin?: () => void;
 }
@@ -19,18 +19,35 @@ export const TeacherLogin: React.FC<TeacherLoginProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!facultyEmail || !password) {
-      setErrorMsg('Please enter your Faculty email and password.');
+    const email = facultyEmail;
+    if (!email || !password) {
+      setErrorMsg('Please enter both email and password.');
       return;
     }
     setIsLoading(true);
     setErrorMsg('');
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role: 'TEACHER' }),
+      });
+      
+      const data = await response.json();
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || 'Invalid credentials');
+      }
+      
+      // Pass the real name, email, and token up to App.tsx
+      onLoginSuccess(data.name, email, data.token);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to connect to server');
+    } finally {
       setIsLoading(false);
-      onLoginSuccess();
-    }, 600);
+    }
   };
 
   const handleQuickFill = () => {

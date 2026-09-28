@@ -39,8 +39,8 @@ export default function App() {
   const [isPhoneFrame, setIsPhoneFrame] = useState<boolean>(false);
 
   // Separate Role Authentication States
-  const [isStudentLoggedIn, setIsStudentLoggedIn] = useState<boolean>(true);
-  const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState<boolean>(true);
+  const [isStudentLoggedIn, setIsStudentLoggedIn] = useState<boolean>(false);
+  const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState<boolean>(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
   // Student State
@@ -271,6 +271,28 @@ export default function App() {
     if (role === 'student') setIsStudentLoggedIn(false);
     if (role === 'teacher') setIsTeacherLoggedIn(false);
     if (role === 'admin') setIsAdminLoggedIn(false);
+    localStorage.removeItem('token');
+  };
+
+  const handleStudentLoginSuccess = (name: string, email: string, token: string) => {
+    localStorage.setItem('token', token);
+    setStudentData(prev => ({
+      ...prev,
+      name: name,
+      email: email,
+      studentId: email.split('@')[0], // derived from email
+    }));
+    setIsStudentLoggedIn(true);
+  };
+
+  const handleTeacherLoginSuccess = (name: string, email: string, token: string) => {
+    localStorage.setItem('token', token);
+    setIsTeacherLoggedIn(true);
+  };
+
+  const handleAdminLoginSuccess = (name: string, email: string, token: string) => {
+    localStorage.setItem('token', token);
+    setIsAdminLoggedIn(true);
   };
 
   // Student verification complete handler
@@ -453,6 +475,7 @@ export default function App() {
               isPhoneFrame={isPhoneFrame}
               isStudentLoggedIn={isStudentLoggedIn}
               setIsStudentLoggedIn={setIsStudentLoggedIn}
+              onLoginSuccess={handleStudentLoginSuccess}
               studentData={studentData}
               activeLecture={activeLecture}
               upcomingLectures={upcomingLectures}
@@ -475,6 +498,7 @@ export default function App() {
             <TeacherPortal
               isTeacherLoggedIn={isTeacherLoggedIn}
               setIsTeacherLoggedIn={setIsTeacherLoggedIn}
+              onLoginSuccess={handleTeacherLoginSuccess}
               lectures={lectures}
               activeLecture={activeLecture}
               handleSelectLecture={handleSelectLecture}
@@ -494,6 +518,7 @@ export default function App() {
             <AdminPortalPage
               isAdminLoggedIn={isAdminLoggedIn}
               setIsAdminLoggedIn={setIsAdminLoggedIn}
+              onLoginSuccess={handleAdminLoginSuccess}
               auditLogs={auditLogs}
               lectures={lectures}
               setAuditLogs={setAuditLogs}

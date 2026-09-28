@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LOGO_URL } from '../data/mockData';
 
 interface AdminLoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (name: string, email: string, token: string) => void;
   onSwitchToStudent?: () => void;
   onSwitchToTeacher?: () => void;
 }
@@ -21,18 +21,34 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminEmail || !password) {
-      setErrorMsg('Please provide valid administrative credentials.');
+      setErrorMsg('Please enter both email and password.');
       return;
     }
     setIsLoading(true);
     setErrorMsg('');
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: adminEmail, password, role: 'ADMIN' }),
+      });
+      
+      const data = await response.json();
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || 'Invalid credentials');
+      }
+      
+      // Pass the real name, email, and token up to App.tsx
+      onLoginSuccess(data.name, adminEmail, data.token);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to connect to server');
+    } finally {
       setIsLoading(false);
-      onLoginSuccess();
-    }, 650);
+    }
   };
 
   const handleQuickFill = () => {

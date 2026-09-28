@@ -10,7 +10,12 @@ export const AdminPortalPage = (props: any) => {
     <>
       {!props.isAdminLoggedIn ? (
         <AdminLogin
-          onLoginSuccess={() => props.setIsAdminLoggedIn(true)}
+          onLoginSuccess={(name, email, token) => {
+            if (props.onLoginSuccess) {
+              props.onLoginSuccess(name, email, token);
+            }
+            props.setIsAdminLoggedIn(true);
+          }}
           onSwitchToStudent={() => navigate('/student')}
           onSwitchToTeacher={() => navigate('/teacher')}
         />

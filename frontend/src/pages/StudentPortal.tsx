@@ -34,7 +34,12 @@ export const StudentPortal = (props: any) => {
     >
       {!props.isStudentLoggedIn ? (
         <StudentLogin
-          onLoginSuccess={() => props.setIsStudentLoggedIn(true)}
+          onLoginSuccess={(...args: any[]) => {
+            if (props.onLoginSuccess) {
+              props.onLoginSuccess(...args);
+            }
+            props.setIsStudentLoggedIn(true);
+          }}
           onOpenRecovery={() => props.setShowDeviceRecovery(true)}
           onSwitchToAdmin={() => navigate('/admin')}
           onSwitchToTeacher={() => navigate('/teacher')}

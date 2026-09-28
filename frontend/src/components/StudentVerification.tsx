@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { AVATAR_URL, CLASSROOM_BG_URL } from '../data/mockData';
 import { Lecture, StudentProfile, DynamicQRChallenge, QRVerificationResult } from '../types';
 import {
@@ -36,6 +37,36 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
 
   const activeChallengeRef = useRef<DynamicQRChallenge>(activeChallenge);
   activeChallengeRef.current = activeChallenge;
+
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    if (scanState === 'scanning') {
+      scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.333334 },
+        false
+      );
+
+      scanner.render(
+        (decodedText) => {
+          scanner?.clear();
+          const attemptStartTime = Date.now();
+          // Use the scanned text as the token
+          const challengeToUse = { ...activeChallengeRef.current, token: decodedText };
+          executeScan(challengeToUse, attemptStartTime, 800);
+        },
+        (error) => {
+          // Ignored (fires on every frame without a QR code)
+        }
+      );
+    }
+
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(e => console.error("Failed to clear scanner", e));
+      }
+    };
+  }, [scanState]);
 
   useEffect(() => {
     // Simulate location lock after 1 second
@@ -312,33 +343,8 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
             </div>
 
             {/* Viewfinder Camera Area */}
-            <div className="relative aspect-4/3 rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl flex items-center justify-center">
-              {/* Background camera feed simulation */}
-              <img
-                alt="Classroom Preview"
-                src={CLASSROOM_BG_URL}
-                className="absolute inset-0 w-full h-full object-cover opacity-60 filter brightness-90"
-              />
-
-              {/* Viewfinder Overlay */}
-              <div className="absolute inset-0 border-36 border-black/50 pointer-events-none" />
-
-              {/* Scanner Corner Reticles */}
-              <div className="relative w-52 h-52 border-2 border-white/40 rounded-2xl flex items-center justify-center">
-                <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#a0f399] rounded-tl-lg" />
-                <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#a0f399] rounded-tr-lg" />
-                <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#a0f399] rounded-bl-lg" />
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#a0f399] rounded-br-lg" />
-
-                {/* Laser animation bar */}
-                <div className="absolute left-2 right-2 h-1 bg-[#a0f399] shadow-[0_0_12px_#a0f399] animate-scan rounded-full" />
-
-                {/* Center token instruction */}
-                <div className="bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white text-[11px] font-bold tracking-wide shadow-md flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#a0f399] animate-pulse" />
-                  <span>Align Dynamic QR</span>
-                </div>
-              </div>
+            <div className="relative aspect-4/3 rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl flex flex-col items-center justify-center [&>div]:w-full">
+              <div id="reader" className="w-full h-full bg-black text-white"></div>
 
               {/* Dynamic rotating challenge token watermark */}
               <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl">

@@ -10,7 +10,12 @@ export const TeacherPortal = (props: any) => {
     <>
       {!props.isTeacherLoggedIn ? (
         <TeacherLogin
-          onLoginSuccess={() => props.setIsTeacherLoggedIn(true)}
+          onLoginSuccess={(name, email, token) => {
+            props.setIsTeacherLoggedIn(true);
+            if (props.onLoginSuccess) {
+              props.onLoginSuccess(name, email, token);
+            }
+          }}
           onSwitchToStudent={() => navigate('/student')}
           onSwitchToAdmin={() => navigate('/admin')}
         />
