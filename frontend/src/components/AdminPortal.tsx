@@ -102,7 +102,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   const handleExportCSV = async () => {
     try {
-      const response = await fetch('/api/attendance/export', { method: 'GET' });
+      const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/attendance/export', { method: 'GET' });
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

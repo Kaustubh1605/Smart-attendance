@@ -25,7 +25,7 @@ export const TeacherReportsModal: React.FC<TeacherReportsModalProps> = ({
 
   const handleExportCSV = async () => {
     try {
-      const response = await fetch('/api/attendance/export', {
+      const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/attendance/export', {
         method: 'GET',
       });
       if (response.ok) {

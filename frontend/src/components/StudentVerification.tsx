@@ -119,7 +119,7 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
         distanceMeters: options?.distanceMeters ?? 6.2,
       };
 
-      const response = await fetch('/api/qr/validate', {
+      const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/qr/validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
