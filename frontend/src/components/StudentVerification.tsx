@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { AVATAR_URL, CLASSROOM_BG_URL } from '../data/mockData';
 import { Lecture, StudentProfile, DynamicQRChallenge, QRVerificationResult } from '../types';
 import {
@@ -39,31 +39,32 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
   activeChallengeRef.current = activeChallenge;
 
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
+    let html5QrCode: Html5Qrcode | null = null;
     if (scanState === 'scanning') {
-      scanner = new Html5QrcodeScanner(
-        "reader",
+      html5QrCode = new Html5Qrcode("reader");
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.333334 },
-        false
-      );
-
-      scanner.render(
         (decodedText) => {
-          scanner?.clear();
+          if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
+          }
           const attemptStartTime = Date.now();
-          // Use the scanned text as the token
           const challengeToUse = { ...activeChallengeRef.current, token: decodedText };
           executeScan(challengeToUse, attemptStartTime, 800);
         },
         (error) => {
-          // Ignored (fires on every frame without a QR code)
+          // Ignored
         }
-      );
+      ).catch((err) => {
+        console.error("Camera start failed:", err);
+      });
     }
 
     return () => {
-      if (scanner) {
-        scanner.clear().catch(e => console.error("Failed to clear scanner", e));
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
       }
     };
   }, [scanState]);
@@ -343,8 +344,8 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
             </div>
 
             {/* Viewfinder Camera Area */}
-            <div className="relative aspect-4/3 rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl flex flex-col items-center justify-center [&>div]:w-full">
-              <div id="reader" className="w-full h-full bg-black text-white"></div>
+            <div className="relative aspect-4/3 rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl">
+              <div id="reader" className="w-full h-full bg-black"></div>
 
               {/* Dynamic rotating challenge token watermark */}
               <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl">
