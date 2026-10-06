@@ -45,7 +45,7 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
       
       html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.333334 },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
           if (html5QrCode && html5QrCode.isScanning) {
             html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
@@ -344,8 +344,8 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
             </div>
 
             {/* Viewfinder Camera Area */}
-            <div className="relative aspect-4/3 rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl">
-              <div id="reader" className="w-full h-full bg-black"></div>
+            <div className="relative rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl w-full">
+              <div id="reader" className="w-full bg-black [&_video]:object-cover"></div>
 
               {/* Dynamic rotating challenge token watermark */}
               <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl">
