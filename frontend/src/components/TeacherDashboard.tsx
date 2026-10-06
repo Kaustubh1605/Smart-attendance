@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import QRCode from 'react-qr-code';
 import { LOGO_URL, MOCK_SUBJECTS, MOCK_CORRECTION_REQUESTS, generateUniqueId } from '../data/mockData';
 import { StudentAttendanceItem, Lecture, AttendanceStatus, CorrectionRequest, StudyMaterial } from '../types';
 import { TeacherStudentVerificationModal } from './TeacherStudentVerificationModal';
@@ -1942,10 +1943,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
             {/* Large Projector QR Display */}
             <div className="p-8 bg-white rounded-3xl shadow-2xl flex flex-col items-center gap-6 relative w-full max-w-xl">
-              <div className="w-80 h-80 sm:w-96 sm:h-96 bg-[#031635] rounded-2xl flex items-center justify-center text-white relative overflow-hidden p-4">
-                <span className="material-symbols-outlined text-white select-none" style={{ fontSize: '320px' }}>
-                  qr_code_2
-                </span>
+              <div className="w-80 h-80 sm:w-96 sm:h-96 bg-white rounded-2xl flex items-center justify-center text-white relative overflow-hidden p-4">
+                <QRCode
+                  value={qrToken}
+                  size={256}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  viewBox={`0 0 256 256`}
+                />
               </div>
 
               <div className="w-full flex justify-between items-center text-[#031635] text-[13px] font-mono">
