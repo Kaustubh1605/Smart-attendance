@@ -40,29 +40,90 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
+    let isMounted = true;
+
     if (scanState === 'scanning') {
-      html5QrCode = new Html5Qrcode("reader");
-      
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
+      const qrCodeId = "reader";
+      const readerElem = document.getElementById(qrCodeId);
+
+      if (readerElem) {
+        html5QrCode = new Html5Qrcode(qrCodeId);
+
+        const onScanSuccess = (decodedText: string) => {
+          if (!isMounted) return;
+          console.log("QR Code auto-detected by camera:", decodedText);
+
+          // Stop scanner immediately to avoid multiple scans
           if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
+            html5QrCode.stop().then(() => {
+              if (html5QrCode) html5QrCode.clear();
+            }).catch(console.error);
           }
+
+          let challengeToUse: DynamicQRChallenge = activeChallengeRef.current;
+          try {
+            const parsed = JSON.parse(decodedText);
+            if (parsed && typeof parsed === 'object') {
+              challengeToUse = {
+                challengeId: parsed.challengeId || activeChallengeRef.current.challengeId,
+                token: parsed.token || decodedText,
+                sessionId: parsed.sessionId || lecture.id,
+                lectureCode: parsed.lectureCode || lecture.code,
+                createdAt: parsed.createdAt || Date.now(),
+                expiresAt: parsed.expiresAt || (Date.now() + 10000),
+                signature: parsed.signature || activeChallengeRef.current.signature,
+                rotationIntervalSeconds: parsed.rotationIntervalSeconds || 10,
+              };
+            } else if (typeof decodedText === 'string') {
+              challengeToUse = { ...activeChallengeRef.current, token: decodedText.trim() };
+            }
+          } catch {
+            challengeToUse = { ...activeChallengeRef.current, token: decodedText.trim() };
+          }
+
           const attemptStartTime = Date.now();
-          const challengeToUse = { ...activeChallengeRef.current, token: decodedText };
-          executeScan(challengeToUse, attemptStartTime, 800);
-        },
-        (error) => {
-          // Ignored
-        }
-      ).catch((err) => {
-        console.error("Camera start failed:", err);
-      });
+          // Instantly execute scan and mark attendance
+          executeScan(challengeToUse, attemptStartTime, 0);
+        };
+
+        const qrConfig = {
+          fps: 15,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const edge = Math.floor(minEdge * 0.75);
+            return { width: Math.max(edge, 220), height: Math.max(edge, 220) };
+          },
+          aspectRatio: 1.0,
+        };
+
+        // Attempt camera device selection: rear/environment first, then fallback to user/webcam
+        Html5Qrcode.getCameras().then((devices) => {
+          if (!isMounted) return;
+          if (devices && devices.length > 0) {
+            const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
+            const selectedId = backCam ? backCam.id : devices[0].id;
+            html5QrCode!.start(selectedId, qrConfig, onScanSuccess, () => {}).catch(() => {
+              html5QrCode!.start({ facingMode: "environment" }, qrConfig, onScanSuccess, () => {}).catch(() => {
+                html5QrCode!.start({ facingMode: "user" }, qrConfig, onScanSuccess, () => {}).catch(console.error);
+              });
+            });
+          } else {
+            html5QrCode!.start({ facingMode: "environment" }, qrConfig, onScanSuccess, () => {}).catch(() => {
+              html5QrCode!.start({ facingMode: "user" }, qrConfig, onScanSuccess, () => {}).catch(console.error);
+            });
+          }
+        }).catch(() => {
+          if (html5QrCode && isMounted) {
+            html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess, () => {}).catch(() => {
+              html5QrCode!.start({ facingMode: "user" }, qrConfig, onScanSuccess, () => {}).catch(console.error);
+            });
+          }
+        });
+      }
     }
 
     return () => {
+      isMounted = false;
       if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => html5QrCode?.clear()).catch(console.error);
       }
@@ -120,11 +181,17 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
         distanceMeters: options?.distanceMeters ?? 6.2,
       };
 
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/qr/validate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(attemptPayload),
       });
       
@@ -343,15 +410,53 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
               </span>
             </div>
 
-            {/* Viewfinder Camera Area */}
-            <div className="relative rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl w-full">
-              <div id="reader" className="w-full bg-black [&_video]:object-cover"></div>
+            {/* Viewfinder Camera Area with HUD targeting overlay */}
+            <div className="relative rounded-3xl overflow-hidden bg-black border-2 border-[#031635] shadow-xl w-full min-h-[300px] flex items-center justify-center">
+              <div id="reader" className="w-full bg-black [&_video]:object-cover [&_video]:w-full [&_video]:h-full"></div>
 
-              {/* Dynamic rotating challenge token watermark */}
-              <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/80 font-mono bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl">
-                <span>DYNAMIC CHALLENGE: {activeChallenge.token}</span>
-                <span className="text-[#a0f399] font-bold">Expires in {tokenCountdown}s</span>
+              {/* Target HUD Reticle Overlay */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="w-64 h-64 border border-[#a0f399]/40 rounded-3xl relative flex items-center justify-center">
+                  {/* Corner brackets */}
+                  <div className="absolute -top-1 -left-1 w-7 h-7 border-t-4 border-l-4 border-[#a0f399] rounded-tl-2xl"></div>
+                  <div className="absolute -top-1 -right-1 w-7 h-7 border-t-4 border-r-4 border-[#a0f399] rounded-tr-2xl"></div>
+                  <div className="absolute -bottom-1 -left-1 w-7 h-7 border-b-4 border-l-4 border-[#a0f399] rounded-bl-2xl"></div>
+                  <div className="absolute -bottom-1 -right-1 w-7 h-7 border-b-4 border-r-4 border-[#a0f399] rounded-br-2xl"></div>
+
+                  {/* Animated laser scan beam */}
+                  <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-[#a0f399] to-transparent shadow-[0_0_12px_#a0f399] animate-pulse"></div>
+                </div>
               </div>
+
+              {/* Viewfinder status badge */}
+              <div className="absolute bottom-3 left-4 right-4 flex justify-between items-center text-[10px] text-white/90 font-mono bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-[#a0f399] animate-ping"></span>
+                  Camera Live • Auto-Detecting
+                </span>
+                <span className="text-[#a0f399] font-bold">Instant Validation</span>
+              </div>
+            </div>
+
+            {/* Live Auto-Scanning Banner (No separate button needed) */}
+            <div className="bg-gradient-to-r from-[#031635] to-[#122b5e] text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center relative flex-shrink-0">
+                  <span className="material-symbols-outlined text-[22px] text-[#a0f399]">
+                    qr_code_scanner
+                  </span>
+                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#a0f399] rounded-full border-2 border-[#031635]"></span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[13px] font-bold text-white">Continuous Camera Scanner</span>
+                  <span className="text-[11px] text-[#b6c6ef]">
+                    Point at teacher's QR • Automatically scans & marks instantly
+                  </span>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-[#a0f399]/20 border border-[#a0f399]/40 text-[#a0f399] text-[11px] font-bold">
+                Live
+              </span>
             </div>
 
             {/* Multi-Factor Verification Checklist */}
@@ -377,7 +482,7 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                     locationVerified ? 'bg-[#a0f399] text-[#005312]' : 'bg-[#e1e3e4] text-[#75777f]'
                   }`}>
-                    {locationVerified ? 'Verified (6.2m)' : 'Locating...'}
+                    {locationVerified ? 'Verified (4.8m)' : 'Locating...'}
                   </span>
                 </div>
 
@@ -409,47 +514,16 @@ export const StudentVerification: React.FC<StudentVerificationProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons to test scan scenarios */}
-            <div className="flex flex-col gap-2 mt-1">
+            {/* Optional helper link for desktop testing if camera hardware is unavailable */}
+            <div className="flex justify-center mt-1">
               <button
+                type="button"
                 onClick={triggerStandardScan}
                 disabled={scanState === 'processing'}
-                className="w-full bg-[#031635] text-white hover:bg-[#1a2b4b] active:scale-[0.98] py-3.5 px-4 rounded-2xl font-bold text-[14px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                className="text-[11px] text-[#75777f] hover:text-[#031635] underline cursor-pointer bg-transparent border-none py-1 transition-colors disabled:opacity-50"
               >
-                {scanState === 'processing' ? (
-                  <>
-                    <span className="material-symbols-outlined text-[20px] animate-spin">sync</span>
-                    <span>{processingNote}</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                    <span>Scan Live Dynamic QR</span>
-                  </>
-                )}
+                {scanState === 'processing' ? processingNote : "Desktop test without camera? Click to simulate QR match"}
               </button>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={triggerNearExpiryScan}
-                  disabled={scanState === 'processing'}
-                  className="bg-[#f0f9ff] border border-[#bae6fd] text-[#0369a1] hover:bg-[#e0f2fe] py-2.5 px-2.5 rounded-2xl font-bold text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs disabled:opacity-50"
-                  title="Simulate scan started at 9.8s and completing during 2s grace after QR rotates"
-                >
-                  <span className="material-symbols-outlined text-[15px]">hourglass_top</span>
-                  <span>Test Near-Expiry Scan</span>
-                </button>
-
-                <button
-                  onClick={triggerExpiredScan}
-                  disabled={scanState === 'processing'}
-                  className="bg-[#fff8f6] border border-[#ffdad6] text-[#ba1a1a] hover:bg-[#ffdad6]/60 py-2.5 px-2.5 rounded-2xl font-bold text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs disabled:opacity-50"
-                  title="Simulate scanning an expired challenge started after 10s expiry"
-                >
-                  <span className="material-symbols-outlined text-[15px]">history_toggle_off</span>
-                  <span>Test Expired QR Scan</span>
-                </button>
-              </div>
             </div>
           </div>
         )}

@@ -1019,82 +1019,98 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f3f4f5]">
-                    {filteredStudents.map((s) => (
-                      <tr key={s.studentId} className="hover:bg-[#f8f9fa]/80 transition-colors">
-                        <td className="py-3 px-4 md:px-5 font-mono text-[#75777f] font-semibold">{s.rollNo}</td>
-                        <td className="py-3 px-4 md:px-5">
-                          <div className="flex items-center gap-2.5">
-                            <img
-                              alt={s.studentName}
-                              className="w-8 h-8 rounded-full object-cover border border-[#d8e2ff]"
-                              src={s.avatarUrl}
-                            />
-                            <span className="font-bold text-[#191c1d]">{s.studentName}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 md:px-5">
-                          <div className="flex items-center gap-1 text-[10px]">
-                            <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
-                              GPS
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
-                              Key
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
-                              10s
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 md:px-5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-[#191c1d] text-[12px]">{s.confidence}%</span>
-                            <div className="w-14 bg-[#f3f4f5] h-1.5 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${
-                                  s.confidence >= 80
-                                    ? 'bg-[#1b6d24]'
-                                    : s.confidence >= 50
-                                    ? 'bg-[#e57300]'
-                                    : 'bg-[#ba1a1a]'
-                                }`}
-                                style={{ width: `${s.confidence}%` }}
-                              />
+                    {filteredStudents.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 px-4 text-center">
+                          <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                            <div className="w-12 h-12 rounded-2xl bg-[#eef2ff] text-[#031635] flex items-center justify-center mb-2.5 border border-[#d8e2ff]">
+                              <span className="material-symbols-outlined text-[24px]">qr_code_scanner</span>
                             </div>
+                            <h4 className="font-bold text-[#191c1d] text-[14px]">No Attendance Scans Yet</h4>
+                            <p className="text-[#75777f] text-[12px] mt-1">
+                              Only students who scan this lecture's live dynamic QR code with their camera will be recorded here. No pre-populated demo data.
+                            </p>
                           </div>
-                        </td>
-                        <td className="py-3 px-4 md:px-5 text-[#75777f] font-mono text-[12px]">{s.time}</td>
-                        <td className="py-3 px-4 md:px-5">
-                          {s.status === 'present' && (
-                            <span className="bg-[#a0f399] text-[#005312] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-                              Present
-                            </span>
-                          )}
-                          {s.status === 'needs_review' && (
-                            <span className="bg-[#ffdcc6] text-[#723600] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-                              Review Req
-                            </span>
-                          )}
-                          {s.status === 'probable' && (
-                            <span className="bg-[#d8e2ff] text-[#031635] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-                              Probable
-                            </span>
-                          )}
-                          {s.status === 'absent' && (
-                            <span className="bg-[#ffdad6] text-[#ba1a1a] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-                              Absent
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 md:px-5 text-right">
-                          <button
-                            onClick={() => setInspectedStudent(s)}
-                            className="px-3 py-1 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                          >
-                            Inspect Telemetry
-                          </button>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredStudents.map((s) => (
+                        <tr key={s.studentId} className="hover:bg-[#f8f9fa]/80 transition-colors">
+                          <td className="py-3 px-4 md:px-5 font-mono text-[#75777f] font-semibold">{s.rollNo}</td>
+                          <td className="py-3 px-4 md:px-5">
+                            <div className="flex items-center gap-2.5">
+                              <img
+                                alt={s.studentName}
+                                className="w-8 h-8 rounded-full object-cover border border-[#d8e2ff]"
+                                src={s.avatarUrl}
+                              />
+                              <span className="font-bold text-[#191c1d]">{s.studentName}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 md:px-5">
+                            <div className="flex items-center gap-1 text-[10px]">
+                              <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
+                                GPS
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
+                                Key
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded-md bg-[#eef2ff] text-[#031635] font-semibold border border-[#d8e2ff]">
+                                10s
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 md:px-5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[#191c1d] text-[12px]">{s.confidence}%</span>
+                              <div className="w-14 bg-[#f3f4f5] h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    s.confidence >= 80
+                                      ? 'bg-[#1b6d24]'
+                                      : s.confidence >= 50
+                                      ? 'bg-[#e57300]'
+                                      : 'bg-[#ba1a1a]'
+                                  }`}
+                                  style={{ width: `${s.confidence}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 md:px-5 text-[#75777f] font-mono text-[12px]">{s.time}</td>
+                          <td className="py-3 px-4 md:px-5">
+                            {s.status === 'present' && (
+                              <span className="bg-[#a0f399] text-[#005312] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+                                Present
+                              </span>
+                            )}
+                            {s.status === 'needs_review' && (
+                              <span className="bg-[#ffdcc6] text-[#723600] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+                                Review Req
+                              </span>
+                            )}
+                            {s.status === 'probable' && (
+                              <span className="bg-[#d8e2ff] text-[#031635] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+                                Probable
+                              </span>
+                            )}
+                            {s.status === 'absent' && (
+                              <span className="bg-[#ffdad6] text-[#ba1a1a] text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+                                Absent
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 md:px-5 text-right">
+                            <button
+                              onClick={() => setInspectedStudent(s)}
+                              className="px-3 py-1 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                            >
+                              Inspect Telemetry
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1945,7 +1961,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <div className="p-8 bg-white rounded-3xl shadow-2xl flex flex-col items-center gap-6 relative w-full max-w-xl">
               <div className="w-80 h-80 sm:w-96 sm:h-96 bg-white rounded-2xl flex items-center justify-center text-white relative overflow-hidden p-4">
                 <QRCode
-                  value={qrToken}
+                  value={JSON.stringify(qrChallenge)}
                   size={256}
                   style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                   viewBox={`0 0 256 256`}

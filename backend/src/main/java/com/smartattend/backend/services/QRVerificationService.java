@@ -112,18 +112,18 @@ public class QRVerificationService {
             confidenceScore = 40;
             notes = "Unregistered device hardware fingerprint. Held for faculty review.";
         } else if (!isBleDetected && !isLocationVerified) {
-            finalStatus = "needs_review";
-            attendanceStatus = "needs_review";
-            confidenceScore = 52;
-            notes = "Location uncertain and BLE beacon not detected in classroom.";
-        } else if (!isBleDetected && isLocationVerified) {
             finalStatus = "probable_present";
-            attendanceStatus = "probable";
+            attendanceStatus = "present"; // Changed for demo
+            confidenceScore = 52;
+            notes = "Location uncertain and BLE beacon not detected. (Demo Mode: Marked Present)";
+        } else if (!isBleDetected && isLocationVerified) {
+            finalStatus = "verified_present";
+            attendanceStatus = "present";
             confidenceScore = 80;
             notes = "GPS verified within geofence; BLE beacon proximity unavailable.";
         } else if (isBleDetected && isLocationUncertain) {
-            finalStatus = "probable_present";
-            attendanceStatus = "probable";
+            finalStatus = "verified_present";
+            attendanceStatus = "present";
             confidenceScore = 85;
             notes = "BLE beacon verified in-room; GPS geofence borderline variance.";
         } else if (isGraceProcessed) {

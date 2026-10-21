@@ -7,6 +7,7 @@ import {
   INITIAL_AUDIT_LOGS,
   MOCK_STUDY_MATERIALS,
   generateUniqueId,
+  AVATAR_URL,
 } from './data/mockData';
 import {
   UserRole,
@@ -60,10 +61,17 @@ export default function App() {
   // Teacher / Class / Lecture State
   const [lectures, setLectures] = useState<Lecture[]>(TODAY_LECTURES);
   const [activeLectureId, setActiveLectureId] = useState<string>(TODAY_LECTURES[0].id);
-  const [classStudents, setClassStudents] = useState<StudentAttendanceItem[]>(MOCK_CLASS_STUDENTS);
+
+  // Isolated per-lecture attendance rosters: new lectures start with 0 demo students!
+  const [lectureAttendanceMap, setLectureAttendanceMap] = useState<Record<string, StudentAttendanceItem[]>>({
+    'lec-1': MOCK_CLASS_STUDENTS,
+    'lec-2': MOCK_CLASS_STUDENTS.slice(0, 5),
+    'lec-3': MOCK_CLASS_STUDENTS.slice(0, 4),
+  });
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
 
   const activeLecture = lectures.find((l) => l.id === activeLectureId) || lectures[0];
+  const currentLectureStudents = lectureAttendanceMap[activeLectureId] || [];
   const upcomingLectures = lectures.filter((l) => l.id !== activeLecture.id);
 
   const handleSelectLecture = (lecture: Lecture) => {
@@ -84,7 +92,12 @@ export default function App() {
   };
 
   const handleCreateLecture = (newLecture: Lecture) => {
-    setLectures((prev) => [newLecture, ...prev]);
+    // Explicitly initialize with an EMPTY attendance roster: 0 demo students!
+    setLectureAttendanceMap((prev) => ({
+      ...prev,
+      [newLecture.id]: [],
+    }));
+    setLectures((prev) => [{ ...newLecture, attendanceCount: 0 }, ...prev]);
     setActiveLectureId(newLecture.id);
     const auditEntry: AuditLogEntry = {
       id: generateUniqueId('aud'),
@@ -149,6 +162,11 @@ export default function App() {
 
       // If deleteAttendance is true, purge the corresponding attendance history records
       if (deleteAttendance) {
+        setLectureAttendanceMap((prev) => {
+          const next = { ...prev };
+          delete next[lectureId];
+          return next;
+        });
         setAttendanceHistory((prev) =>
           prev.filter((r) => r.lectureId !== lectureId && r.lectureCode !== targetLecture.code)
         );
@@ -328,12 +346,48 @@ export default function App() {
 
     setAttendanceHistory((prev) => [newRecord, ...prev]);
 
-    // Also update in teacher roster
-    setClassStudents((prev) =>
-      prev.map((s) =>
-        s.studentId === studentData.studentId
-          ? { ...s, status: finalAttendanceStatus, confidence: confidenceScore, time: timeStr }
-          : s
+    // Also update in teacher roster for this specific lecture
+    const scannedAttendee: StudentAttendanceItem = {
+      studentId: studentData.studentId || 'STU-' + Math.floor(1000 + Math.random() * 9000),
+      studentName: studentData.name,
+      rollNo: studentData.rollNo || (studentData.email ? studentData.email.split('@')[0] : 'RN-101'),
+      avatarUrl: studentData.avatarUrl || AVATAR_URL,
+      status: finalAttendanceStatus,
+      confidence: confidenceScore,
+      time: timeStr,
+      locationMatch: result?.evidence?.locationStatus === 'verified',
+      deviceTrusted: result?.evidence?.deviceStatus === 'trusted',
+      challengeOk: true,
+      bleDetected: result?.evidence?.bleDetected ?? true,
+      visualEvidence: 'available',
+    };
+
+    setLectureAttendanceMap((prev) => {
+      const currentList = prev[lecture.id] || [];
+      const existingIdx = currentList.findIndex(
+        (s) => s.studentId === scannedAttendee.studentId || s.studentName.toLowerCase() === scannedAttendee.studentName.toLowerCase()
+      );
+      let updatedList: StudentAttendanceItem[];
+      if (existingIdx >= 0) {
+        updatedList = currentList.map((item, idx) =>
+          idx === existingIdx
+            ? { ...item, status: finalAttendanceStatus, confidence: confidenceScore, time: timeStr }
+            : item
+        );
+      } else {
+        updatedList = [scannedAttendee, ...currentList];
+      }
+      return {
+        ...prev,
+        [lecture.id]: updatedList,
+      };
+    });
+
+    setLectures((prev) =>
+      prev.map((l) =>
+        l.id === lecture.id
+          ? { ...l, attendanceCount: (lectureAttendanceMap[lecture.id]?.length || 0) + 1 }
+          : l
       )
     );
 
@@ -388,21 +442,25 @@ export default function App() {
 
   // Teacher manual override / approval handler
   const handleTeacherOverride = (studentId: string, newStatus: AttendanceStatus, reason: string) => {
-    const student = classStudents.find((s) => s.studentId === studentId);
+    const student = currentLectureStudents.find((s) => s.studentId === studentId);
     if (!student) return;
 
     const prevStatus = student.status;
-    setClassStudents((prev) =>
-      prev.map((s) =>
-        s.studentId === studentId
-          ? {
-              ...s,
-              status: newStatus,
-              confidence: newStatus === 'present' ? 100 : newStatus === 'probable' ? 75 : 0
-            }
-          : s
-      )
-    );
+    setLectureAttendanceMap((prev) => {
+      const currentList = prev[activeLectureId] || [];
+      return {
+        ...prev,
+        [activeLectureId]: currentList.map((s) =>
+          s.studentId === studentId
+            ? {
+                ...s,
+                status: newStatus,
+                confidence: newStatus === 'present' ? 100 : newStatus === 'probable' ? 75 : 0
+              }
+            : s
+        ),
+      };
+    });
 
     // Audit log entry
     const auditEntry: AuditLogEntry = {
@@ -506,7 +564,7 @@ export default function App() {
               handleUpdateLecture={handleUpdateLecture}
               handleDeleteLecture={handleDeleteLecture}
               handleEndAttendance={handleEndAttendance}
-              classStudents={classStudents}
+              classStudents={currentLectureStudents}
               handleTeacherOverride={handleTeacherOverride}
               studyMaterials={studyMaterials}
               handleAddStudyMaterial={handleAddStudyMaterial}
