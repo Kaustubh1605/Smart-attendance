@@ -8,6 +8,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -20,6 +26,11 @@ public class QRVerificationService {
     
     private final Set<String> submittedChallengeAttempts = new HashSet<>();
     private final Set<String> submittedSessionAttendance = new HashSet<>();
+    private final Map<String, List<Map<String, Object>>> sessionAttendees = new ConcurrentHashMap<>();
+
+    public List<Map<String, Object>> getSessionAttendees(String sessionId) {
+        return sessionAttendees.getOrDefault(sessionId, Collections.emptyList());
+    }
     
     private String createSignature(String payload) {
         int hash = 0;
@@ -144,6 +155,29 @@ public class QRVerificationService {
         result.setChallengeStatus("valid");
         result.setGraceProcessed(isGraceProcessed);
         result.setEvidence(evidence);
+
+        // Store attendee record for live session synchronization
+        Map<String, Object> attendeeRecord = new HashMap<>();
+        attendeeRecord.put("studentId", attempt.getStudentId());
+        attendeeRecord.put("studentName", attempt.getStudentName() != null ? attempt.getStudentName() : attempt.getStudentId());
+        String roll = attempt.getStudentId() != null && attempt.getStudentId().contains("@")
+                ? attempt.getStudentId().split("@")[0]
+                : (attempt.getStudentId() != null ? attempt.getStudentId() : "RN-101");
+        attendeeRecord.put("rollNo", roll);
+        attendeeRecord.put("sessionId", attempt.getSessionId());
+        attendeeRecord.put("lectureCode", attempt.getLectureCode());
+        attendeeRecord.put("status", attendanceStatus);
+        attendeeRecord.put("confidence", confidenceScore);
+        attendeeRecord.put("time", evidence.getTimestamp());
+        attendeeRecord.put("locationMatch", "verified".equals(attempt.getLocationStatus()));
+        attendeeRecord.put("deviceTrusted", isDeviceTrusted);
+        attendeeRecord.put("challengeOk", true);
+        attendeeRecord.put("bleDetected", isBleDetected);
+        attendeeRecord.put("avatarUrl", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256");
+
+        if (attempt.getSessionId() != null) {
+            sessionAttendees.computeIfAbsent(attempt.getSessionId(), k -> new CopyOnWriteArrayList<>()).add(attendeeRecord);
+        }
         
         return result;
     }

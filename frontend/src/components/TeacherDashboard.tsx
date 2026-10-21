@@ -140,6 +140,14 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     return () => document.removeEventListener('click', handleDocumentClick);
   }, []);
 
+  // Immediate challenge synchronization whenever active lecture changes
+  useEffect(() => {
+    const newChallenge = generateDynamicQRChallenge(currentLecture.id, currentLecture.code);
+    setQrChallenge(newChallenge);
+    setQrToken(newChallenge.token);
+    setTokenCountdown(10);
+  }, [currentLecture.id, currentLecture.code]);
+
   // EXACTLY 10-second countdown and dynamic challenge token rotation
   useEffect(() => {
     if (!sessionActive) return;
@@ -803,9 +811,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 <div className="flex items-center gap-5 my-3 bg-white/5 p-4 rounded-2xl border border-white/10">
                   <div
                     onClick={() => setShowProjectorQR(true)}
-                    className="w-32 h-32 bg-white rounded-xl p-1 flex items-center justify-center text-[#031635] cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-md"
+                    className="w-32 h-32 bg-white rounded-xl p-2 flex items-center justify-center text-[#031635] cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-md overflow-hidden"
+                    title="Click to open projector fullscreen view"
                   >
-                    <span className="material-symbols-outlined select-none text-[#031635]" style={{ fontSize: '100px' }}>qr_code_2</span>
+                    <QRCode
+                      value={JSON.stringify(qrChallenge)}
+                      size={112}
+                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                      viewBox={`0 0 256 256`}
+                    />
                   </div>
                   <div className="flex flex-col flex-1">
                     <span className="font-mono font-bold text-white text-[13px]">{qrToken}</span>

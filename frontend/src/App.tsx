@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CURRENT_STUDENT,
   TODAY_LECTURES,
@@ -29,6 +29,11 @@ import { RegistrationPage } from './pages/RegistrationPage';
 import { CorrectionModal } from './components/CorrectionModal';
 import { DeviceRecoveryModal } from './components/DeviceRecoveryModal';
 
+const LOCAL_STORAGE_KEY_LECTURES = 'smartattend_lectures';
+const LOCAL_STORAGE_KEY_ACTIVE_LEC = 'smartattend_active_lecture_id';
+const LOCAL_STORAGE_KEY_ROSTER = 'smartattend_lecture_attendance_map';
+const LOCAL_STORAGE_KEY_HISTORY = 'smartattend_attendance_history';
+
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,7 +53,16 @@ export default function App() {
   const [studentTab, setStudentTab] = useState<'home' | 'history' | 'materials' | 'profile'>('home');
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [studentData, setStudentData] = useState<StudentProfile>(CURRENT_STUDENT);
-  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE_HISTORY);
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_HISTORY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_ATTENDANCE_HISTORY;
+  });
 
   // Study Materials State (Shared across student and teacher workspaces)
   const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>(MOCK_STUDY_MATERIALS);
@@ -58,17 +72,225 @@ export default function App() {
   const [correctionTargetRecord, setCorrectionTargetRecord] = useState<AttendanceRecord | null>(null);
   const [showDeviceRecovery, setShowDeviceRecovery] = useState<boolean>(false);
 
-  // Teacher / Class / Lecture State
-  const [lectures, setLectures] = useState<Lecture[]>(TODAY_LECTURES);
-  const [activeLectureId, setActiveLectureId] = useState<string>(TODAY_LECTURES[0].id);
+  // Teacher / Class / Lecture State with localStorage fallback
+  const [lectures, setLectures] = useState<Lecture[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_LECTURES);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return TODAY_LECTURES;
+  });
+
+  const [activeLectureId, setActiveLectureId] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ACTIVE_LEC);
+      if (saved && saved.trim()) return saved;
+    } catch (e) {}
+    return TODAY_LECTURES[0]?.id || 'lec-1';
+  });
 
   // Isolated per-lecture attendance rosters: new lectures start with 0 demo students!
-  const [lectureAttendanceMap, setLectureAttendanceMap] = useState<Record<string, StudentAttendanceItem[]>>({
-    'lec-1': MOCK_CLASS_STUDENTS,
-    'lec-2': MOCK_CLASS_STUDENTS.slice(0, 5),
-    'lec-3': MOCK_CLASS_STUDENTS.slice(0, 4),
+  const [lectureAttendanceMap, setLectureAttendanceMap] = useState<Record<string, StudentAttendanceItem[]>>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ROSTER);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
+    return {
+      'lec-1': MOCK_CLASS_STUDENTS,
+      'lec-2': MOCK_CLASS_STUDENTS.slice(0, 5),
+      'lec-3': MOCK_CLASS_STUDENTS.slice(0, 4),
+    };
   });
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
+
+  // Auto-sync state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_LECTURES, JSON.stringify(lectures));
+    } catch (e) {}
+  }, [lectures]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_ACTIVE_LEC, activeLectureId);
+    } catch (e) {}
+  }, [activeLectureId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_ROSTER, JSON.stringify(lectureAttendanceMap));
+    } catch (e) {}
+  }, [lectureAttendanceMap]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_HISTORY, JSON.stringify(attendanceHistory));
+    } catch (e) {}
+  }, [attendanceHistory]);
+
+  // Real-time Cross-tab synchronization via BroadcastChannel & storage events
+  useEffect(() => {
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('smartattend_channel') : null;
+
+    if (channel) {
+      channel.onmessage = (event) => {
+        const data = event.data;
+        if (!data) return;
+
+        if (data.type === 'ATTENDANCE_RECORDED') {
+          const { lectureId, attendee, newRecord } = data;
+          if (attendee && lectureId) {
+            setLectureAttendanceMap((prev) => {
+              const currentList = prev[lectureId] || [];
+              const existingIdx = currentList.findIndex(
+                (s) => s.studentId === attendee.studentId || (attendee.studentName && s.studentName.toLowerCase() === attendee.studentName.toLowerCase())
+              );
+              let updatedList: StudentAttendanceItem[];
+              if (existingIdx >= 0) {
+                updatedList = currentList.map((item, idx) => (idx === existingIdx ? { ...item, ...attendee } : item));
+              } else {
+                updatedList = [attendee, ...currentList];
+              }
+
+              setLectures((prevLecs) =>
+                prevLecs.map((l) =>
+                  l.id === lectureId
+                    ? { ...l, attendanceCount: updatedList.length }
+                    : l
+                )
+              );
+
+              return { ...prev, [lectureId]: updatedList };
+            });
+          }
+          if (newRecord) {
+            setAttendanceHistory((prev) => {
+              if (prev.some((r) => r.id === newRecord.id)) return prev;
+              return [newRecord, ...prev];
+            });
+          }
+        } else if (data.type === 'LECTURE_CREATED') {
+          const { newLecture } = data;
+          if (newLecture) {
+            setLectures((prev) => {
+              if (prev.some((l) => l.id === newLecture.id)) return prev;
+              return [{ ...newLecture, attendanceCount: 0 }, ...prev];
+            });
+            setLectureAttendanceMap((prev) => ({
+              ...prev,
+              [newLecture.id]: prev[newLecture.id] || [],
+            }));
+            setActiveLectureId(newLecture.id);
+          }
+        } else if (data.type === 'ACTIVE_LECTURE_CHANGED') {
+          if (data.lectureId) {
+            setActiveLectureId(data.lectureId);
+          }
+        }
+      };
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === LOCAL_STORAGE_KEY_ROSTER && event.newValue) {
+        try {
+          setLectureAttendanceMap(JSON.parse(event.newValue));
+        } catch (e) {}
+      }
+      if (event.key === LOCAL_STORAGE_KEY_LECTURES && event.newValue) {
+        try {
+          setLectures(JSON.parse(event.newValue));
+        } catch (e) {}
+      }
+      if (event.key === LOCAL_STORAGE_KEY_ACTIVE_LEC && event.newValue) {
+        setActiveLectureId(event.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // Periodic poll of backend attendees for the currently active lecture (syncs across devices/mobile phones)
+  useEffect(() => {
+    if (!activeLectureId) return;
+
+    let isMounted = true;
+    const fetchAttendees = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/qr/attendees/${activeLectureId}`);
+        if (!res.ok) return;
+        const attendees: any[] = await res.json();
+        if (!isMounted || !Array.isArray(attendees) || attendees.length === 0) return;
+
+        setLectureAttendanceMap((prev) => {
+          const currentList = prev[activeLectureId] || [];
+          let hasChange = false;
+          let updatedList = [...currentList];
+
+          attendees.forEach((att) => {
+            const idx = updatedList.findIndex(
+              (s) => s.studentId === att.studentId || (att.studentName && s.studentName.toLowerCase() === att.studentName.toLowerCase())
+            );
+            const attendeeItem: StudentAttendanceItem = {
+              studentId: att.studentId,
+              studentName: att.studentName || att.studentId,
+              rollNo: att.rollNo || (att.studentId ? att.studentId.split('@')[0] : 'RN-101'),
+              avatarUrl: att.avatarUrl || AVATAR_URL,
+              status: (att.status as AttendanceStatus) || 'present',
+              confidence: att.confidence ?? 98,
+              time: att.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              locationMatch: att.locationMatch ?? true,
+              deviceTrusted: att.deviceTrusted ?? true,
+              challengeOk: att.challengeOk ?? true,
+              bleDetected: att.bleDetected ?? true,
+              visualEvidence: 'available',
+            };
+
+            if (idx >= 0) {
+              if (updatedList[idx].status !== attendeeItem.status) {
+                updatedList[idx] = { ...updatedList[idx], ...attendeeItem };
+                hasChange = true;
+              }
+            } else {
+              updatedList = [attendeeItem, ...updatedList];
+              hasChange = true;
+            }
+          });
+
+          if (!hasChange) return prev;
+
+          // Synchronously update lecture attendance count
+          setLectures((prevLecs) =>
+            prevLecs.map((l) => (l.id === activeLectureId ? { ...l, attendanceCount: updatedList.length } : l))
+          );
+
+          return {
+            ...prev,
+            [activeLectureId]: updatedList,
+          };
+        });
+      } catch (err) {
+        // network or backend starting
+      }
+    };
+
+    fetchAttendees();
+    const interval = setInterval(fetchAttendees, 2000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [activeLectureId]);
 
   const activeLecture = lectures.find((l) => l.id === activeLectureId) || lectures[0];
   const currentLectureStudents = lectureAttendanceMap[activeLectureId] || [];
@@ -76,6 +298,11 @@ export default function App() {
 
   const handleSelectLecture = (lecture: Lecture) => {
     setActiveLectureId(lecture.id);
+    try {
+      const channel = new BroadcastChannel('smartattend_channel');
+      channel.postMessage({ type: 'ACTIVE_LECTURE_CHANGED', lectureId: lecture.id });
+      channel.close();
+    } catch (e) {}
     const auditEntry: AuditLogEntry = {
       id: generateUniqueId('aud'),
       timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
@@ -99,6 +326,11 @@ export default function App() {
     }));
     setLectures((prev) => [{ ...newLecture, attendanceCount: 0 }, ...prev]);
     setActiveLectureId(newLecture.id);
+    try {
+      const channel = new BroadcastChannel('smartattend_channel');
+      channel.postMessage({ type: 'LECTURE_CREATED', newLecture });
+      channel.close();
+    } catch (e) {}
     const auditEntry: AuditLogEntry = {
       id: generateUniqueId('aud'),
       timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
@@ -365,7 +597,7 @@ export default function App() {
     setLectureAttendanceMap((prev) => {
       const currentList = prev[lecture.id] || [];
       const existingIdx = currentList.findIndex(
-        (s) => s.studentId === scannedAttendee.studentId || s.studentName.toLowerCase() === scannedAttendee.studentName.toLowerCase()
+        (s) => s.studentId === scannedAttendee.studentId || (scannedAttendee.studentName && s.studentName.toLowerCase() === scannedAttendee.studentName.toLowerCase())
       );
       let updatedList: StudentAttendanceItem[];
       if (existingIdx >= 0) {
@@ -377,19 +609,34 @@ export default function App() {
       } else {
         updatedList = [scannedAttendee, ...currentList];
       }
+
+      // Synchronously update lectures list attendance count
+      setLectures((prevLecs) =>
+        prevLecs.map((l) =>
+          l.id === lecture.id
+            ? { ...l, attendanceCount: updatedList.length }
+            : l
+        )
+      );
+
       return {
         ...prev,
         [lecture.id]: updatedList,
       };
     });
 
-    setLectures((prev) =>
-      prev.map((l) =>
-        l.id === lecture.id
-          ? { ...l, attendanceCount: (lectureAttendanceMap[lecture.id]?.length || 0) + 1 }
-          : l
-      )
-    );
+    setActiveLectureId(lecture.id);
+
+    try {
+      const channel = new BroadcastChannel('smartattend_channel');
+      channel.postMessage({
+        type: 'ATTENDANCE_RECORDED',
+        lectureId: lecture.id,
+        attendee: scannedAttendee,
+        newRecord: newRecord,
+      });
+      channel.close();
+    } catch (e) {}
 
     // Append to audit trail
     const auditEntry: AuditLogEntry = {

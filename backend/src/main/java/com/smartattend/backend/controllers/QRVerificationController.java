@@ -29,4 +29,9 @@ public class QRVerificationController {
         QRVerificationResult result = qrVerificationService.validateAttendanceAttempt(attempt);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/attendees/{sessionId}")
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> getSessionAttendees(@PathVariable String sessionId) {
+        return ResponseEntity.ok(qrVerificationService.getSessionAttendees(sessionId));
+    }
 }
