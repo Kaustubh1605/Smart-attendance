@@ -59,12 +59,16 @@ export const StudentSubjectAttendanceView: React.FC<StudentSubjectAttendanceView
   // All attendance records for this specific subject
   const subjectRecords = useMemo(() => {
     if (!currentSubject) return [];
-    return attendanceHistory.filter(
-      (r) =>
-        r.lectureCode.toLowerCase() === currentSubject.code.toLowerCase() ||
-        r.subjectName.toLowerCase().includes(currentSubject.name.toLowerCase()) ||
-        currentSubject.name.toLowerCase().includes(r.subjectName.toLowerCase())
-    );
+    const code = (currentSubject.code || '').toUpperCase().trim();
+    const name = (currentSubject.name || '').toLowerCase().trim();
+    return attendanceHistory.filter((r) => {
+      const recCode = (r.lectureCode || '').toUpperCase().trim();
+      const recName = (r.subjectName || '').toLowerCase().trim();
+      return (
+        recCode === code ||
+        (recName && name && (recName.includes(name) || name.includes(recName)))
+      );
+    });
   }, [attendanceHistory, currentSubject]);
 
   // Group records by Month (e.g., "October 2026", "September 2026", etc.)
@@ -410,14 +414,21 @@ export const StudentSubjectAttendanceView: React.FC<StudentSubjectAttendanceView
 
           {/* Monthly Cards List */}
           {Object.keys(monthlyGroups).length === 0 ? (
-            <div className="bg-white rounded-3xl p-10 border border-slate-200/80 shadow-xs flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-3 shadow-inner">
-                <span className="material-symbols-outlined text-[32px]">event_busy</span>
+            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xs flex flex-col items-center justify-center text-center gap-3">
+              <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-1 shadow-inner">
+                <span className="material-symbols-outlined text-[32px]">school</span>
               </div>
-              <h4 className="text-[16px] font-bold text-slate-900">No Historical Records Found</h4>
-              <p className="text-[12px] text-slate-500 max-w-sm mt-1">
-                Attendance logs for {currentSubject?.name} will populate as daily lectures are conducted.
+              <span className="bg-emerald-100 text-emerald-800 text-[11px] font-extrabold uppercase px-3 py-1 rounded-full">
+                Active Enrolled Course
+              </span>
+              <h4 className="text-[17px] font-extrabold text-slate-900">{currentSubject?.name} ({currentSubject?.code})</h4>
+              <p className="text-[13px] text-slate-500 max-w-md">
+                This course is enrolled and scheduled for <strong className="text-slate-700">{currentSubject?.schedule || 'regular class hours'}</strong> in <strong className="text-slate-700">{currentSubject?.room || 'Assigned Hall'}</strong> with <strong className="text-slate-700">{currentSubject?.instructor}</strong>.
               </p>
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-center gap-2 text-[12px] text-indigo-900 font-medium mt-1">
+                <span className="material-symbols-outlined text-[18px] text-indigo-600">qr_code_scanner</span>
+                <span>Scan the rotating QR code in class or use the Bottom Bar scanner to mark attendance. It will appear here immediately!</span>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-5">

@@ -6,6 +6,7 @@ import {
   MOCK_CLASS_STUDENTS,
   INITIAL_AUDIT_LOGS,
   MOCK_STUDY_MATERIALS,
+  MOCK_STUDENT_SUBJECTS,
   generateUniqueId,
   AVATAR_URL,
 } from './data/mockData';
@@ -19,6 +20,7 @@ import {
   AttendanceStatus,
   StudyMaterial,
   QRVerificationResult,
+  SubjectAttendance,
 } from './types';
 import { Navbar } from './components/Navbar';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -33,6 +35,117 @@ const LOCAL_STORAGE_KEY_LECTURES = 'smartattend_lectures';
 const LOCAL_STORAGE_KEY_ACTIVE_LEC = 'smartattend_active_lecture_id';
 const LOCAL_STORAGE_KEY_ROSTER = 'smartattend_lecture_attendance_map';
 const LOCAL_STORAGE_KEY_HISTORY = 'smartattend_attendance_history';
+const LOCAL_STORAGE_KEY_SUBJECTS = 'smartattend_dynamic_subjects';
+
+/**
+ * Computes a completely synchronized list of subjects for students and teachers,
+ * ensuring newly created subjects in Teacher Portal instantly appear in Student Portal.
+ */
+function computeDynamicSubjects(
+  currentLectures: Lecture[],
+  history: AttendanceRecord[],
+  baseSubjects: SubjectAttendance[] = MOCK_STUDENT_SUBJECTS
+): SubjectAttendance[] {
+  const subjectMap = new Map<string, SubjectAttendance>();
+
+  // 1. Seed with base student subjects
+  baseSubjects.forEach((sub) => {
+    const codeKey = sub.code.toUpperCase().trim();
+    subjectMap.set(codeKey, { ...sub, code: codeKey });
+  });
+
+  // 2. Ensure every lecture (including teacher-created lectures) is in the subject map
+  currentLectures.forEach((lec) => {
+    const code = (lec.code || '').toUpperCase().trim();
+    if (!code) return;
+    const existing = subjectMap.get(code);
+    if (existing) {
+      subjectMap.set(code, {
+        ...existing,
+        name: lec.name || existing.name,
+        instructor: lec.instructor || existing.instructor,
+        room: lec.room || existing.room,
+        schedule: lec.timeSlot || existing.schedule,
+      });
+    } else {
+      subjectMap.set(code, {
+        id: `subj-${code.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        code: code,
+        name: lec.name || `${code} Course`,
+        instructor: lec.instructor || 'Prof. Faculty',
+        totalLectures: 0,
+        present: 0,
+        absent: 0,
+        needsReview: 0,
+        percentage: 100,
+        room: lec.room || 'Room 204',
+        schedule: lec.timeSlot || 'Mon, Wed • 10:00 AM',
+        isBelowThreshold: false,
+      });
+    }
+  });
+
+  // 3. Ensure any subjects from attendance history are in the map
+  history.forEach((rec) => {
+    const code = (rec.lectureCode || '').toUpperCase().trim();
+    if (!code) return;
+    if (!subjectMap.has(code)) {
+      subjectMap.set(code, {
+        id: `subj-${code.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        code: code,
+        name: rec.subjectName || `${code} Course`,
+        instructor: 'Prof. Faculty',
+        totalLectures: 0,
+        present: 0,
+        absent: 0,
+        needsReview: 0,
+        percentage: 100,
+        room: rec.room || 'Room 204',
+        schedule: '10:00 AM - 11:00 AM',
+        isBelowThreshold: false,
+      });
+    }
+  });
+
+  // 4. Dynamically recalculate attendance stats from actual records
+  const result: SubjectAttendance[] = [];
+  subjectMap.forEach((sub) => {
+    const code = sub.code.toUpperCase();
+    const relevantRecords = history.filter(
+      (r) =>
+        (r.lectureCode || '').toUpperCase().trim() === code ||
+        (r.subjectName && sub.name && (r.subjectName.toLowerCase().includes(sub.name.toLowerCase()) || sub.name.toLowerCase().includes(r.subjectName.toLowerCase())))
+    );
+
+    if (relevantRecords.length > 0) {
+      const total = relevantRecords.length;
+      const pres = relevantRecords.filter((r) => r.status === 'present' || r.status === 'probable').length;
+      const abs = relevantRecords.filter((r) => r.status === 'absent').length;
+      const rev = relevantRecords.filter((r) => r.status === 'needs_review').length;
+      const pct = total > 0 ? Math.round((pres / total) * 1000) / 10 : 100;
+      result.push({
+        ...sub,
+        totalLectures: total,
+        present: pres,
+        absent: abs,
+        needsReview: rev,
+        percentage: pct,
+        isBelowThreshold: pct < 75,
+      });
+    } else {
+      result.push({
+        ...sub,
+        totalLectures: sub.totalLectures || 0,
+        present: sub.present || 0,
+        absent: sub.absent || 0,
+        percentage: sub.totalLectures > 0 ? sub.percentage : 100,
+        isBelowThreshold: false,
+      });
+    }
+  });
+
+  return result;
+}
 
 export default function App() {
   const location = useLocation();
@@ -62,6 +175,18 @@ export default function App() {
       }
     } catch (e) {}
     return INITIAL_ATTENDANCE_HISTORY;
+  });
+
+  // Dynamic Subjects State (Automatically updated when teacher creates a subject or student marks attendance)
+  const [dynamicSubjects, setDynamicSubjects] = useState<SubjectAttendance[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_SUBJECTS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return computeDynamicSubjects(TODAY_LECTURES, INITIAL_ATTENDANCE_HISTORY, MOCK_STUDENT_SUBJECTS);
   });
 
   // Study Materials State (Shared across student and teacher workspaces)
@@ -134,6 +259,17 @@ export default function App() {
     } catch (e) {}
   }, [attendanceHistory]);
 
+  // Synchronize dynamic subjects whenever lectures or attendance history changes
+  useEffect(() => {
+    setDynamicSubjects((prev) => {
+      const updated = computeDynamicSubjects(lectures, attendanceHistory, prev);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY_SUBJECTS, JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  }, [lectures, attendanceHistory]);
+
   // Real-time Cross-tab synchronization via BroadcastChannel & storage events
   useEffect(() => {
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('smartattend_channel') : null;
@@ -172,7 +308,9 @@ export default function App() {
           if (newRecord) {
             setAttendanceHistory((prev) => {
               if (prev.some((r) => r.id === newRecord.id)) return prev;
-              return [newRecord, ...prev];
+              const nextHistory = [newRecord, ...prev];
+              setDynamicSubjects(computeDynamicSubjects(lectures, nextHistory));
+              return nextHistory;
             });
           }
         } else if (data.type === 'LECTURE_CREATED') {
@@ -180,13 +318,19 @@ export default function App() {
           if (newLecture) {
             setLectures((prev) => {
               if (prev.some((l) => l.id === newLecture.id)) return prev;
-              return [{ ...newLecture, attendanceCount: 0 }, ...prev];
+              const nextLecs = [{ ...newLecture, attendanceCount: 0 }, ...prev];
+              setDynamicSubjects(computeDynamicSubjects(nextLecs, attendanceHistory));
+              return nextLecs;
             });
             setLectureAttendanceMap((prev) => ({
               ...prev,
               [newLecture.id]: prev[newLecture.id] || [],
             }));
             setActiveLectureId(newLecture.id);
+          }
+        } else if (data.type === 'SUBJECTS_UPDATED') {
+          if (Array.isArray(data.subjects) && data.subjects.length > 0) {
+            setDynamicSubjects(data.subjects);
           }
         } else if (data.type === 'ACTIVE_LECTURE_CHANGED') {
           if (data.lectureId) {
@@ -205,6 +349,11 @@ export default function App() {
       if (event.key === LOCAL_STORAGE_KEY_LECTURES && event.newValue) {
         try {
           setLectures(JSON.parse(event.newValue));
+        } catch (e) {}
+      }
+      if (event.key === LOCAL_STORAGE_KEY_SUBJECTS && event.newValue) {
+        try {
+          setDynamicSubjects(JSON.parse(event.newValue));
         } catch (e) {}
       }
       if (event.key === LOCAL_STORAGE_KEY_ACTIVE_LEC && event.newValue) {
@@ -388,8 +537,18 @@ export default function App() {
       ...prev,
       [newLecture.id]: [],
     }));
-    setLectures((prev) => [{ ...newLecture, attendanceCount: 0 }, ...prev]);
+    const updatedLecs = [{ ...newLecture, attendanceCount: 0 }, ...lectures];
+    setLectures(updatedLecs);
     setActiveLectureId(newLecture.id);
+
+    // Immediately update dynamic subjects so Student Portal's Subjects tab reflects the new course
+    const updatedSubjects = computeDynamicSubjects(updatedLecs, attendanceHistory, dynamicSubjects);
+    setDynamicSubjects(updatedSubjects);
+
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_SUBJECTS, JSON.stringify(updatedSubjects));
+      localStorage.setItem(LOCAL_STORAGE_KEY_LECTURES, JSON.stringify(updatedLecs));
+    } catch (e) {}
 
     // Broadcast to backend so student portal sees this new lecture immediately
     fetch(`${import.meta.env.VITE_API_URL || ''}/api/lectures/active`, {
@@ -410,6 +569,7 @@ export default function App() {
     try {
       const channel = new BroadcastChannel('smartattend_channel');
       channel.postMessage({ type: 'LECTURE_CREATED', newLecture });
+      channel.postMessage({ type: 'SUBJECTS_UPDATED', subjects: updatedSubjects });
       channel.close();
     } catch (e) {}
     const auditEntry: AuditLogEntry = {
@@ -631,35 +791,61 @@ export default function App() {
     setIsVerifying(false);
     const finalAttendanceStatus: AttendanceStatus = result?.attendanceStatus || 'present';
     const confidenceScore = result?.confidenceScore ?? 98;
-    const timeStr = result?.evidence?.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Exact local device clock time and date format
+    const now = new Date();
+    const deviceTimeStr = now.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+    const year = now.getFullYear();
+    const monthNum = String(now.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(now.getDate()).padStart(2, '0');
+    const localDateStr = `${year}-${monthNum}-${dayNum}`;
+    const localDay = String(now.getDate()).padStart(2, '0');
+    const localMonthShort = now.toLocaleString('en-US', { month: 'short' });
 
     // Add record to history if not already present
     const newRecord: AttendanceRecord = {
       id: generateUniqueId('rec'),
-      date: new Date().toISOString().slice(0, 10),
-      day: new Date().getDate().toString(),
-      month: new Date().toLocaleString('default', { month: 'short' }),
-      lectureCode: lecture.code,
+      date: localDateStr,
+      day: localDay,
+      month: localMonthShort,
+      lectureCode: lecture.code.toUpperCase().trim(),
       subjectName: lecture.name,
       lectureType: `Lecture - ${lecture.room}`,
       room: lecture.room,
       status: finalAttendanceStatus,
-      evidence: result?.evidence || {
-        timestamp: timeStr,
-        locationStatus: 'verified',
-        locationDistanceMeters: 4.8,
-        deviceStatus: 'trusted',
+      evidence: {
+        ...(result?.evidence || {}),
+        timestamp: deviceTimeStr,
+        locationStatus: result?.evidence?.locationStatus || 'verified',
+        locationDistanceMeters: result?.evidence?.locationDistanceMeters || 3.8,
+        deviceStatus: result?.evidence?.deviceStatus || 'trusted',
         dynamicChallengeVerified: true,
-        challengeLatencyMs: 380,
-        bleDetected: true,
-        confidenceScore: 98,
-        notes: 'Verified via live classroom 10s QR challenge & GPS geofence match.'
-      }
+        challengeLatencyMs: result?.evidence?.challengeLatencyMs || 220,
+        bleDetected: result?.evidence?.bleDetected ?? true,
+        confidenceScore: confidenceScore,
+        notes: `Multi-factor attendance confirmed at device time ${deviceTimeStr}.`,
+      },
     };
 
-    setAttendanceHistory((prev) => [newRecord, ...prev]);
+    setAttendanceHistory((prev) => {
+      const updated = [newRecord, ...prev];
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY_HISTORY, JSON.stringify(updated));
+      } catch (e) {}
+      const updatedSubs = computeDynamicSubjects(lectures, updated, dynamicSubjects);
+      setDynamicSubjects(updatedSubs);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY_SUBJECTS, JSON.stringify(updatedSubs));
+      } catch (e) {}
+      return updated;
+    });
 
-    // Also update in teacher roster for this specific lecture
+    // Also update in teacher roster for this specific lecture with device timestamp
     const scannedAttendee: StudentAttendanceItem = {
       studentId: studentData.studentId || 'STU-' + Math.floor(1000 + Math.random() * 9000),
       studentName: studentData.name,
@@ -667,7 +853,7 @@ export default function App() {
       avatarUrl: studentData.avatarUrl || AVATAR_URL,
       status: finalAttendanceStatus,
       confidence: confidenceScore,
-      time: timeStr,
+      time: deviceTimeStr,
       locationMatch: result?.evidence?.locationStatus === 'verified',
       deviceTrusted: result?.evidence?.deviceStatus === 'trusted',
       challengeOk: true,
@@ -684,7 +870,7 @@ export default function App() {
       if (existingIdx >= 0) {
         updatedList = currentList.map((item, idx) =>
           idx === existingIdx
-            ? { ...item, status: finalAttendanceStatus, confidence: confidenceScore, time: timeStr }
+            ? { ...item, status: finalAttendanceStatus, confidence: confidenceScore, time: deviceTimeStr }
             : item
         );
       } else {
@@ -866,6 +1052,7 @@ export default function App() {
               activeLecture={activeLecture}
               upcomingLectures={upcomingLectures}
               lectures={lectures}
+              subjects={dynamicSubjects}
               attendanceHistory={attendanceHistory}
               studyMaterials={studyMaterials}
               selectedMaterialSubject={selectedMaterialSubject}

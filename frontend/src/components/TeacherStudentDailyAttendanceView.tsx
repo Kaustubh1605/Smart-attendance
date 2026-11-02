@@ -111,8 +111,78 @@ export const TeacherStudentDailyAttendanceView: React.FC<TeacherStudentDailyAtte
   const [selectedSubjectCode, setSelectedSubjectCode] = useState<string>('ALL');
   const [selectedMonth, setSelectedMonth] = useState<string>('ALL');
 
-  // Dynamic state for day-by-day records with teacher override support
-  const [records, setRecords] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE_HISTORY);
+  // Dynamic state for day-by-day records with localStorage persistence and teacher override support
+  const [records, setRecords] = useState<AttendanceRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('smartattend_attendance_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_ATTENDANCE_HISTORY;
+  });
+
+  // Dynamically derive all subjects (including newly teacher-created courses and history)
+  const availableSubjects = useMemo(() => {
+    const map = new Map<string, { code: string; name: string }>();
+
+    // Seed from base subjects
+    MOCK_SUBJECTS.forEach((s) => {
+      map.set(s.code.toUpperCase().trim(), { code: s.code.toUpperCase().trim(), name: s.name });
+    });
+
+    // Read dynamic subjects saved in localStorage
+    try {
+      const savedSubs = localStorage.getItem('smartattend_dynamic_subjects');
+      if (savedSubs) {
+        const parsed = JSON.parse(savedSubs);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((s: any) => {
+            if (s.code) map.set(s.code.toUpperCase().trim(), { code: s.code.toUpperCase().trim(), name: s.name || s.code });
+          });
+        }
+      }
+    } catch {}
+
+    // Read lectures saved in localStorage
+    try {
+      const savedLecs = localStorage.getItem('smartattend_lectures');
+      if (savedLecs) {
+        const parsed = JSON.parse(savedLecs);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((l: any) => {
+            if (l.code) map.set(l.code.toUpperCase().trim(), { code: l.code.toUpperCase().trim(), name: l.name || l.code });
+          });
+        }
+      }
+    } catch {}
+
+    // Read from records history
+    records.forEach((r) => {
+      if (r.lectureCode) {
+        const code = r.lectureCode.toUpperCase().trim();
+        if (!map.has(code)) {
+          map.set(code, { code, name: r.subjectName || code });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [records]);
+
+  // Real-time synchronization when attendance is recorded or overridden
+  React.useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'smartattend_attendance_history' && e.newValue) {
+        try {
+          setRecords(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   // Filter students based on search query
   const filteredStudents = useMemo(() => {
@@ -176,22 +246,40 @@ export const TeacherStudentDailyAttendanceView: React.FC<TeacherStudentDailyAtte
 
   // Handle Teacher Status Override
   const handleUpdateStatus = (recordId: string, newStatus: 'present' | 'absent' | 'needs_review') => {
-    setRecords((prev) =>
-      prev.map((r) => {
+    const now = new Date();
+    const deviceTimeStr = now.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+
+    setRecords((prev) => {
+      const updated = prev.map((r) => {
         if (r.id === recordId) {
           return {
             ...r,
             status: newStatus,
             evidence: {
               ...r.evidence,
-              notes: `Manually verified & overridden to ${newStatus.toUpperCase()} by Instructor Prof. Sharma.`,
+              timestamp: deviceTimeStr,
+              notes: `Manually verified & overridden to ${newStatus.toUpperCase()} by Instructor Prof. Sharma at device time ${deviceTimeStr}.`,
               confidenceScore: newStatus === 'present' ? 100 : newStatus === 'absent' ? 0 : 50,
             },
           };
         }
         return r;
-      })
-    );
+      });
+
+      try {
+        localStorage.setItem('smartattend_attendance_history', JSON.stringify(updated));
+        const channel = new BroadcastChannel('smartattend_channel');
+        channel.postMessage({ type: 'ATTENDANCE_OVERRIDDEN', recordId, newStatus, timestamp: deviceTimeStr });
+        channel.close();
+      } catch {}
+
+      return updated;
+    });
 
     const msg = `Updated ${currentStudent.name}'s status to ${newStatus.toUpperCase()}`;
     if (onShowToast) onShowToast(msg);
@@ -369,9 +457,9 @@ export const TeacherStudentDailyAttendanceView: React.FC<TeacherStudentDailyAtte
               onChange={(e) => setSelectedSubjectCode(e.target.value)}
               className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-800 outline-none focus:bg-white focus:border-indigo-600"
             >
-              <option value="ALL">All Enrolled Subjects</option>
-              {MOCK_SUBJECTS.map((sub) => (
-                <option key={sub.id} value={sub.code}>
+              <option value="ALL">All Enrolled Subjects ({availableSubjects.length})</option>
+              {availableSubjects.map((sub) => (
+                <option key={sub.code} value={sub.code}>
                   {sub.code} - {sub.name}
                 </option>
               ))}
@@ -563,3 +651,4 @@ export const TeacherStudentDailyAttendanceView: React.FC<TeacherStudentDailyAtte
     </div>
   );
 };
+

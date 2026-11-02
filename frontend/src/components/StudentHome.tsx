@@ -24,6 +24,7 @@ interface StudentHomeProps {
   activeLecture: Lecture;
   upcomingLectures: Lecture[];
   attendanceHistory?: AttendanceRecord[];
+  subjects?: SubjectAttendance[];
   onStartVerification: () => void;
   onNavigateHistory: () => void;
   onNavigateSubjects?: () => void;
@@ -37,6 +38,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   activeLecture,
   upcomingLectures,
   attendanceHistory = [],
+  subjects,
   onStartVerification,
   onNavigateHistory,
   onNavigateSubjects,
@@ -302,7 +304,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
-            {MOCK_SUBJECTS.map((sub) => {
+            {(subjects && subjects.length > 0 ? subjects : MOCK_SUBJECTS).map((sub) => {
               const isWarning = sub.percentage < 75;
               return (
                 <div

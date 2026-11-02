@@ -1,18 +1,23 @@
 import React from 'react';
-import { AVATAR_URL, LOGO_URL } from '../data/mockData';
-import { StudentProfile } from '../types';
+import { AVATAR_URL, LOGO_URL, MOCK_SUBJECTS } from '../data/mockData';
+import { StudentProfile, SubjectAttendance } from '../types';
 
 interface StudentProfileProps {
   student: StudentProfile;
+  subjects?: SubjectAttendance[];
+  onNavigateSubjects?: (subjectCode?: string) => void;
   onLogout: () => void;
   onOpenDeviceRecovery: () => void;
 }
 
 export const StudentProfileView: React.FC<StudentProfileProps> = ({
   student,
+  subjects,
+  onNavigateSubjects,
   onLogout,
   onOpenDeviceRecovery,
 }) => {
+  const activeSubjects = subjects && subjects.length > 0 ? subjects : MOCK_SUBJECTS;
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#f3f4f5] text-[#191c1d] pb-24 font-sans">
       {/* Header */}
@@ -106,6 +111,73 @@ export const StudentProfileView: React.FC<StudentProfileProps> = ({
               </span>
               <span className="text-[10px] text-[#75777f] font-semibold mt-0.5">Top 5% in Batch</span>
             </div>
+          </div>
+        </div>
+
+        {/* Enrolled Courses & Academic Standing */}
+        <div className="bg-white rounded-2xl p-5 border border-[#e1e3e4] shadow-xs flex flex-col gap-3">
+          <div className="flex justify-between items-center border-b border-[#f3f4f5] pb-2">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-[#75777f]">
+              Enrolled Courses & Academic Standing
+            </span>
+            <span className="bg-[#eef2ff] text-[#031635] text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-[#d8e2ff]">
+              {activeSubjects.length} Courses
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {activeSubjects.map((sub) => {
+              const isWarning = sub.percentage < 75;
+              return (
+                <div
+                  key={sub.id || sub.code}
+                  className="p-3 bg-[#f8f9fa] rounded-xl border border-[#e1e3e4] flex flex-col gap-2 hover:border-[#031635]/30 transition-all"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold bg-white text-[#031635] px-2 py-0.5 rounded border border-[#e1e3e4]">
+                        {sub.code}
+                      </span>
+                      <h4 className="text-[13px] font-bold text-[#191c1d] leading-tight">{sub.name}</h4>
+                    </div>
+                    <span
+                      className={`text-[12px] font-extrabold ${
+                        isWarning ? 'text-[#ba1a1a]' : 'text-[#005312]'
+                      }`}
+                    >
+                      {sub.percentage}%
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px] text-[#75777f]">
+                    <span>{sub.instructor} • {sub.room || 'Room 204'}</span>
+                    <span className="font-medium text-[#44474e]">
+                      {sub.present}/{sub.totalLectures} attended
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-[#e1e3e4] h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        isWarning ? 'bg-[#ba1a1a]' : 'bg-[#005312]'
+                      }`}
+                      style={{ width: `${Math.min(100, sub.percentage)}%` }}
+                    />
+                  </div>
+
+                  {onNavigateSubjects && (
+                    <button
+                      type="button"
+                      onClick={() => onNavigateSubjects(sub.code)}
+                      className="mt-1 py-1.5 px-3 bg-white hover:bg-[#eef2ff] text-[#031635] text-[11px] font-bold rounded-lg border border-[#d8e2ff] transition-all flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>View Monthly Attendance Breakdown</span>
+                      <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

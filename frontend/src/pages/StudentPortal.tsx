@@ -64,6 +64,7 @@ export const StudentPortal = (props: any) => {
                 activeLecture={props.activeLecture}
                 upcomingLectures={props.upcomingLectures}
                 attendanceHistory={props.attendanceHistory}
+                subjects={props.subjects}
                 onStartVerification={() => setShowPhonePeScanner(true)}
                 onNavigateHistory={() => handleSelectTab('history')}
                 onNavigateSubjects={() => handleSelectTab('subjects')}
@@ -111,6 +112,8 @@ export const StudentPortal = (props: any) => {
             <Route path="profile" element={
               <StudentProfileView
                 student={props.studentData}
+                subjects={props.subjects}
+                onNavigateSubjects={(code?: string) => handleSelectTab('subjects')}
                 onLogout={() => props.setIsStudentLoggedIn(false)}
                 onOpenDeviceRecovery={() => props.setShowDeviceRecovery(true)}
               />
