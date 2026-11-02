@@ -618,55 +618,63 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   });
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#f3f4f5] text-[#191c1d] font-sans pb-16">
-      {/* Admin Top Navigation */}
-      <header className="sticky top-0 w-full z-40 bg-white/95 backdrop-blur-xl border-b border-[#e1e3e4] shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-2.5 min-h-16 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2.5">
-            <img alt="SmartAttend" className="h-7 md:h-8 w-auto shrink-0" src={LOGO_URL} />
-            <div className="flex flex-col">
-              <span className="text-[10px] md:text-[11px] font-bold text-[#75777f] uppercase tracking-wider">
-                Administration & Security
-              </span>
-              <span className="text-sm md:text-base font-bold text-[#031635]">Institutional Portal</span>
+    <div className="flex flex-col w-full min-h-screen bg-slate-50 text-slate-900 font-sans pb-20 selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Admin Top Command Header */}
+      <header className="sticky top-0 w-full z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 min-h-16 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-900 to-indigo-950 flex items-center justify-center shadow-sm text-white shrink-0">
+              <span className="material-symbols-outlined text-[20px] text-indigo-300">shield</span>
             </div>
-            <div className="h-5 w-px bg-[#e1e3e4] mx-1 hidden sm:block" />
-            <span className="text-[12px] text-[#44474e] hidden lg:inline">
-              Springfield University • Tenant: springfield-01
-            </span>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900">
+                  Institutional Command Center
+                </span>
+                <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Admin Ops
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-500 font-medium">
+                Springfield University • Tenant: springfield-01
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 text-[12px] font-bold text-white bg-[#031635] hover:bg-[#1a2b4b] px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-md"
-              title="Download Full Attendance CSV"
+              className="flex items-center gap-1.5 text-[12px] font-bold text-white bg-slate-900 hover:bg-slate-800 px-3.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm hover:shadow active:scale-95"
+              title="Download Full Attendance CSV Report"
             >
-              <span className="material-symbols-outlined text-[16px]">download</span>
+              <span className="material-symbols-outlined text-[16px] text-indigo-300">download</span>
               <span className="hidden sm:inline">Export CSV</span>
             </button>
 
             <button
               onClick={() => setShowHelpModal(true)}
-              className="flex items-center gap-1.5 text-[12px] font-semibold text-[#031635] bg-[#eef2ff] hover:bg-[#d8e2ff] px-3 py-1.5 rounded-xl border border-[#d8e2ff] transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-200/80 transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              <span className="material-symbols-outlined text-[16px]">help_center</span>
-              <span>Help & Docs</span>
+              <span className="material-symbols-outlined text-[16px] text-slate-500">help_center</span>
+              <span className="hidden sm:inline">Docs & Help</span>
             </button>
 
-            <span className="inline-flex items-center gap-1.5 bg-[#a0f399]/40 border border-[#a0f399] text-[#005312] text-[11px] font-bold px-2.5 py-1 rounded-full hidden md:inline-flex">
-              <span className="w-2 h-2 rounded-full bg-[#005312] animate-pulse" />
-              All Systems Operational
-            </span>
+            <div className="hidden lg:inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>All Systems Operational</span>
+            </div>
 
             {onLogout && (
               <button
                 onClick={onLogout}
-                className="flex items-center gap-1.5 text-[12px] font-bold text-[#ba1a1a] bg-[#ffdad6]/60 hover:bg-[#ffdad6] px-3 py-1.5 rounded-xl border border-[#ba1a1a]/20 transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-transparent hover:border-rose-200 transition-all cursor-pointer shadow-xs active:scale-95"
                 title="Sign out of administrative session"
               >
                 <span className="material-symbols-outlined text-[16px]">logout</span>
-                <span>Sign Out</span>
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             )}
           </div>
@@ -675,8 +683,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
       {/* Toast notification banner */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-[#031635] text-white px-4 py-3 rounded-2xl shadow-xl border border-white/10 flex items-center gap-2.5 text-[13px] animate-in fade-in slide-in-from-top-4">
-          <span className="material-symbols-outlined text-[#a0f399] text-[20px]">check_circle</span>
+        <div className="fixed top-20 right-6 z-50 bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-2.5 text-[13px] font-medium animate-in fade-in slide-in-from-top-4 duration-200">
+          <span className="material-symbols-outlined text-emerald-400 text-[20px]">check_circle</span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -684,12 +692,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 w-full flex flex-col gap-5 md:gap-6">
         {/* Navigation Tabs Bar */}
-        <div className="flex gap-1.5 bg-[#f8f9fa] p-1.5 rounded-2xl border border-[#e1e3e4] overflow-x-auto no-scrollbar">
+        <div className="flex gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200/80 backdrop-blur-sm overflow-x-auto no-scrollbar shadow-inner">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-            { id: 'registrations', label: 'Registrations', icon: 'how_to_reg' },
-            { id: 'students', label: 'Students', icon: 'school' },
-            { id: 'teachers', label: 'Faculty', icon: 'badge' },
+            { id: 'registrations', label: 'Registrations', icon: 'how_to_reg', count: pendingUsers.length },
+            { id: 'students', label: 'Students', icon: 'school', count: students.length },
+            { id: 'teachers', label: 'Faculty', icon: 'badge', count: teachers.length },
             { id: 'classes', label: 'Classes & Courses', icon: 'menu_book' },
             { id: 'classrooms', label: 'Classrooms & Beacons', icon: 'meeting_room' },
             { id: 'timetable', label: 'Timetable', icon: 'calendar_month' },
@@ -697,20 +705,38 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
             { id: 'audit', label: 'Audit Trail', icon: 'verified_user' },
             { id: 'settings', label: 'System Settings', icon: 'settings' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3.5 py-2 rounded-xl text-[12px] font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-[#031635] text-white shadow-xs'
-                  : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[17px] shrink-0">{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-95 ${
+                  isActive
+                    ? 'bg-slate-900 text-white shadow-md font-bold scale-[1.01]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+              >
+                <span className={`material-symbols-outlined text-[17px] shrink-0 ${isActive ? 'text-indigo-300' : 'text-slate-500'}`}>
+                  {tab.icon}
+                </span>
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                    tab.id === 'registrations'
+                      ? isActive
+                        ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-400/30'
+                        : 'bg-amber-100 text-amber-800'
+                      : isActive
+                      ? 'bg-slate-800 text-indigo-300'
+                      : 'bg-slate-300/60 text-slate-700'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* ========================================================
@@ -720,55 +746,55 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           <div className="flex flex-col gap-5 animate-in fade-in duration-200">
             {/* Top Stat Summary Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e1e3e4] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#75777f]">Total Students</span>
-                <span className="text-[20px] font-extrabold text-[#031635] mt-0.5">1,240</span>
-                <span className="text-[10px] text-[#005312] font-semibold">1,218 Bound</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-sm transition-all group flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Students</span>
+                <span className="text-[20px] font-black text-slate-900 group-hover:text-indigo-600 transition-colors my-0.5">{students.length}</span>
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md inline-block w-fit">1,218 Bound</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e1e3e4] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#75777f]">Total Faculty</span>
-                <span className="text-[20px] font-extrabold text-[#031635] mt-0.5">64</span>
-                <span className="text-[10px] text-[#75777f] font-semibold">6 Depts</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-purple-300 hover:shadow-sm transition-all group flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Faculty</span>
+                <span className="text-[20px] font-black text-slate-900 group-hover:text-purple-600 transition-colors my-0.5">{teachers.length}</span>
+                <span className="text-[10px] text-slate-600 font-semibold bg-slate-100 px-1.5 py-0.5 rounded-md inline-block w-fit">6 Depts</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e1e3e4] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#75777f]">Active Classes</span>
-                <span className="text-[20px] font-extrabold text-[#031635] mt-0.5">18</span>
-                <span className="text-[10px] text-[#005312] font-semibold">Sem 1 - Sem 6</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-300 hover:shadow-sm transition-all group flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Active Classes</span>
+                <span className="text-[20px] font-black text-slate-900 group-hover:text-blue-600 transition-colors my-0.5">18</span>
+                <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded-md inline-block w-fit">Sem 1 - Sem 6</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e1e3e4] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#75777f]">Today&apos;s Lectures</span>
-                <span className="text-[20px] font-extrabold text-[#031635] mt-0.5">42</span>
-                <span className="text-[10px] text-[#031635] font-semibold">12 In Progress</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-sm transition-all group flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Today's Lectures</span>
+                <span className="text-[20px] font-black text-slate-900 group-hover:text-indigo-600 transition-colors my-0.5">42</span>
+                <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded-md inline-block w-fit">12 Active</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-2xl border border-[#e1e3e4] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#75777f]">Today Attendance</span>
-                <span className="text-[20px] font-extrabold text-[#005312] mt-0.5">88.4%</span>
-                <span className="text-[10px] text-[#005312] font-semibold">+1.2% vs avg</span>
+              <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-emerald-300 hover:shadow-sm transition-all group flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Attendance Rate</span>
+                <span className="text-[20px] font-black text-emerald-600 my-0.5">88.4%</span>
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md inline-block w-fit">+1.2% trend</span>
               </div>
 
-              <div className="bg-[#fffaf0] p-3.5 rounded-2xl border border-[#ffdcc6] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#723600]">Requires Review</span>
-                <span className="text-[20px] font-extrabold text-[#723600] mt-0.5">14</span>
-                <span className="text-[10px] text-[#723600] font-semibold">Location / Latency</span>
+              <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Review Queue</span>
+                <span className="text-[20px] font-black text-amber-900 my-0.5">14</span>
+                <span className="text-[10px] text-amber-800 font-bold bg-amber-100/80 px-1.5 py-0.5 rounded-md inline-block w-fit">GPS/Latency</span>
               </div>
 
-              <div className="bg-[#fff8f6] p-3.5 rounded-2xl border border-[#ffdad6] shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#ba1a1a]">Suspicious Events</span>
-                <span className="text-[20px] font-extrabold text-[#ba1a1a] mt-0.5">3</span>
-                <span className="text-[10px] text-[#ba1a1a] font-semibold">Off-Campus Submits</span>
+              <div className="bg-rose-50/60 p-3.5 rounded-2xl border border-rose-200/70 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-rose-800 tracking-wider">Suspicious</span>
+                <span className="text-[20px] font-black text-rose-700 my-0.5">3</span>
+                <span className="text-[10px] text-rose-800 font-bold bg-rose-100/80 px-1.5 py-0.5 rounded-md inline-block w-fit">Off-Campus</span>
               </div>
 
-              <div className="bg-[#eefcf0] p-3.5 rounded-2xl border border-[#a0f399]/50 shadow-xs flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-[#005312]">System Health</span>
-                <span className="text-[16px] font-bold text-[#005312] mt-1 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-[#005312] animate-pulse" />
-                  100%
+              <div className="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-200/70 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Mesh Status</span>
+                <span className="text-[15px] font-black text-emerald-700 my-0.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Optimal
                 </span>
-                <span className="text-[10px] text-[#005312] font-semibold">All nodes green</span>
+                <span className="text-[10px] text-emerald-800 font-bold bg-emerald-100/80 px-1.5 py-0.5 rounded-md inline-block w-fit">100% online</span>
               </div>
             </div>
 
@@ -949,61 +975,146 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         )}
 
         {/* ========================================================
-            TAB: REGISTRATIONS
+            TAB: REGISTRATIONS APPROVAL PIPELINE
            ======================================================== */}
         {activeTab === 'registrations' && (
-          <div className="flex flex-col gap-5 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl border border-[#e1e3e4] shadow-xs flex flex-col p-6">
-              <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+            {/* Quick Status Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
                 <div>
-                  <h2 className="text-[18px] font-bold text-[#031635]">Pending Registrations</h2>
-                  <p className="text-[12px] text-[#75777f]">Review and approve new student and teacher accounts.</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Pending Review</p>
+                  <p className="text-2xl font-black text-slate-900 mt-0.5">{pendingUsers.length}</p>
                 </div>
+                <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-700">
+                  <span className="material-symbols-outlined text-[22px]">pending_actions</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Student Sign-ups</p>
+                  <p className="text-2xl font-black text-indigo-600 mt-0.5">
+                    {pendingUsers.filter(u => u.role === 'STUDENT').length}
+                  </p>
+                </div>
+                <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-600">
+                  <span className="material-symbols-outlined text-[22px]">school</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Faculty Sign-ups</p>
+                  <p className="text-2xl font-black text-purple-600 mt-0.5">
+                    {pendingUsers.filter(u => u.role === 'TEACHER').length}
+                  </p>
+                </div>
+                <div className="w-11 h-11 rounded-2xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600">
+                  <span className="material-symbols-outlined text-[22px]">badge</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Pending Table Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-b from-slate-50/50 to-transparent">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[18px] font-extrabold text-slate-900 tracking-tight">Pending Registrations Queue</h2>
+                    {pendingUsers.length > 0 && (
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-200">
+                        {pendingUsers.length} Action Needed
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[12px] text-slate-500 mt-0.5">
+                    Review self-service student and faculty requests or directly enroll verified credentials.
+                  </p>
+                </div>
+
                 <button 
                   onClick={() => handleOpenAddUserModal('STUDENT')}
-                  className="px-4 py-2 bg-[#031635] text-white rounded-xl text-[13px] font-bold shadow-sm flex items-center gap-1.5 hover:bg-[#1a2b4b] cursor-pointer transition-colors"
+                  className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-[13px] font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shrink-0"
                 >
                   <span className="material-symbols-outlined text-[18px]">person_add</span>
-                  Directly Add User
+                  <span>Directly Add User</span>
                 </button>
               </div>
 
               {pendingUsers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-10 text-[#75777f]">
-                  <span className="material-symbols-outlined text-[48px] mb-2 opacity-50">done_all</span>
-                  <p className="font-bold">No pending registrations</p>
-                  <p className="text-[12px]">All users have been processed.</p>
+                <div className="flex flex-col items-center justify-center p-12 text-center">
+                  <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-3 shadow-inner">
+                    <span className="material-symbols-outlined text-[32px]">task_alt</span>
+                  </div>
+                  <h3 className="text-[16px] font-bold text-slate-800">Queue is Clear!</h3>
+                  <p className="text-[13px] text-slate-500 max-w-sm mt-1 mb-4">
+                    All student and teacher account registration requests have been approved or processed.
+                  </p>
+                  <button
+                    onClick={() => handleOpenAddUserModal('STUDENT')}
+                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                    <span>Manually Add New User</span>
+                  </button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[13px] text-left">
+                  <table className="w-full text-[13px] text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-[#f3f4f5] text-[#75777f]">
-                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Name</th>
-                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Email</th>
-                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Role</th>
-                        <th className="py-3 px-4 font-semibold uppercase text-[10px]">Date</th>
-                        <th className="py-3 px-4 font-semibold uppercase text-[10px] text-right">Actions</th>
+                      <tr className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500">
+                        <th className="py-3.5 px-5 font-bold uppercase text-[10px] tracking-wider">Candidate Name</th>
+                        <th className="py-3.5 px-5 font-bold uppercase text-[10px] tracking-wider">Email Address</th>
+                        <th className="py-3.5 px-5 font-bold uppercase text-[10px] tracking-wider">Role Requested</th>
+                        <th className="py-3.5 px-5 font-bold uppercase text-[10px] tracking-wider">Applied Date</th>
+                        <th className="py-3.5 px-5 font-bold uppercase text-[10px] tracking-wider text-right">Decision Actions</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {pendingUsers.map(user => (
-                        <tr key={user.id} className="border-b border-[#f3f4f5] hover:bg-[#f8f9fa] transition-colors">
-                          <td className="py-3 px-4 font-bold text-[#031635]">{user.name}</td>
-                          <td className="py-3 px-4 text-[#44474e]">{user.email}</td>
-                          <td className="py-3 px-4">
-                            <span className="bg-[#eef2ff] text-[#031635] text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border border-[#d8e2ff]">
+                        <tr key={user.id} className="hover:bg-slate-50/70 transition-colors group">
+                          <td className="py-4 px-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-slate-200 to-slate-100 border border-slate-300/80 flex items-center justify-center font-bold text-slate-700 text-xs shadow-xs">
+                                {user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </div>
+                              <span className="font-bold text-slate-900">{user.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-5 text-slate-600 font-mono text-[12px]">{user.email}</td>
+                          <td className="py-4 px-5">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wide border ${
+                              user.role === 'STUDENT'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : 'bg-purple-50 text-purple-700 border-purple-200'
+                            }`}>
+                              <span className="material-symbols-outlined text-[13px]">
+                                {user.role === 'STUDENT' ? 'school' : 'badge'}
+                              </span>
                               {user.role}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-[#75777f]">{new Date(user.createdAt).toLocaleDateString()}</td>
-                          <td className="py-3 px-4">
+                          <td className="py-4 px-5 text-slate-500 text-[12px]">
+                            {new Date(user.createdAt).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </td>
+                          <td className="py-4 px-5">
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => handleApproveUser(user.id)} className="bg-[#a0f399]/40 text-[#005312] hover:bg-[#a0f399] px-3 py-1.5 rounded-lg text-[12px] font-bold border border-[#a0f399]/60 flex items-center gap-1 transition-colors">
+                              <button
+                                onClick={() => handleApproveUser(user.id)}
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 px-3.5 py-1.5 rounded-xl text-[12px] font-bold border border-emerald-200 flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer"
+                              >
                                 <span className="material-symbols-outlined text-[16px]">check</span>
                                 Approve
                               </button>
-                              <button onClick={() => handleRejectUser(user.id)} className="bg-[#ffdad6]/40 text-[#ba1a1a] hover:bg-[#ffdad6] px-3 py-1.5 rounded-lg text-[12px] font-bold border border-[#ffdad6]/60 flex items-center gap-1 transition-colors">
+                              <button
+                                onClick={() => handleRejectUser(user.id)}
+                                className="bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 px-3 py-1.5 rounded-xl text-[12px] font-semibold border border-slate-200/80 hover:border-rose-200 flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer"
+                              >
                                 <span className="material-symbols-outlined text-[16px]">close</span>
                                 Reject
                               </button>
@@ -1020,32 +1131,42 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         )}
 
         {/* ========================================================
-            TAB 2: STUDENT MANAGEMENT
+            TAB 2: STUDENT MANAGEMENT DIRECTORY
            ======================================================== */}
         {activeTab === 'students' && (
-          <div className="bg-white rounded-3xl border border-[#e1e3e4] shadow-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <div className="p-5 border-b border-[#f3f4f5] flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-b from-slate-50/50 to-transparent">
               <div>
-                <h2 className="text-[18px] font-bold text-[#031635]">Student Management Directory</h2>
-                <p className="text-[12px] text-[#75777f]">
-                  Enrollment, hardware keystore binding, and attendance standing
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[18px] font-extrabold text-slate-900 tracking-tight">Student Directory & Credentials</h2>
+                  <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200">
+                    {students.length} Enrolled
+                  </span>
+                </div>
+                <p className="text-[12px] text-slate-500 mt-0.5">
+                  Institutional enrollment roster, hardware keystore status, and academic standing
                 </p>
               </div>
 
               {/* Search, Filters, and Add Student */}
-              <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
-                <input
-                  type="text"
-                  placeholder="Search student, roll, ID, class..."
-                  value={searchStudent}
-                  onChange={(e) => setSearchStudent(e.target.value)}
-                  className="px-3.5 py-1.5 text-[12px] bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl focus:outline-none focus:border-[#031635] w-full sm:w-60"
-                />
+              <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
+                <div className="relative w-full sm:w-64">
+                  <span className="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search student, roll, ID, class..."
+                    value={searchStudent}
+                    onChange={(e) => setSearchStudent(e.target.value)}
+                    className="w-full pl-9 pr-3.5 py-2 text-[12px] bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                  />
+                </div>
 
                 <select
                   value={studentFilter}
                   onChange={(e) => setStudentFilter(e.target.value as any)}
-                  className="px-3 py-1.5 text-[12px] bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl focus:outline-none focus:border-[#031635]"
+                  className="px-3 py-2 text-[12px] bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:outline-none focus:border-indigo-600 cursor-pointer"
                 >
                   <option value="ALL">All Students ({students.length})</option>
                   <option value="active">Active Only</option>
@@ -1055,10 +1176,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
                 <button
                   onClick={() => handleOpenAddUserModal('STUDENT')}
-                  className="px-3.5 py-1.5 bg-[#031635] text-white rounded-xl text-[12px] font-bold shadow-sm flex items-center gap-1.5 hover:bg-[#1a2b4b] cursor-pointer transition-colors whitespace-nowrap"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-[12px] font-bold shadow-md shadow-indigo-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all whitespace-nowrap"
                 >
                   <span className="material-symbols-outlined text-[16px]">person_add</span>
-                  Add Student
+                  <span>Add Student</span>
                 </button>
               </div>
             </div>
@@ -1066,97 +1187,122 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-[12px] border-collapse">
                 <thead>
-                  <tr className="bg-[#f8f9fa] text-[#75777f] font-bold text-[11px] uppercase tracking-wider border-b border-[#e1e3e4]">
-                    <th className="py-3 px-4">Student ID / Roll</th>
-                    <th className="py-3 px-4">Student Name</th>
-                    <th className="py-3 px-4">Class / Division</th>
-                    <th className="py-3 px-4">Registered Hardware</th>
-                    <th className="py-3 px-4">Attendance Rate</th>
-                    <th className="py-3 px-4">Account Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-slate-50/75 text-slate-500 font-bold text-[10px] uppercase tracking-wider border-b border-slate-200/80">
+                    <th className="py-3.5 px-5">Student ID & Roll</th>
+                    <th className="py-3.5 px-5">Student Candidate</th>
+                    <th className="py-3.5 px-5">Course / Division</th>
+                    <th className="py-3.5 px-5">Hardware Keystore</th>
+                    <th className="py-3.5 px-5">Attendance Rate</th>
+                    <th className="py-3.5 px-5">Status</th>
+                    <th className="py-3.5 px-5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#f3f4f5]">
+                <tbody className="divide-y divide-slate-100">
                   {filteredStudents.map((st) => (
-                    <tr key={st.id} className="hover:bg-[#f8f9fa]/80 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-[#031635]">
-                        {st.studentId}
-                        <span className="block text-[11px] font-normal text-[#75777f]">Roll: {st.rollNo}</span>
+                    <tr key={st.id} className="hover:bg-slate-50/70 transition-colors group">
+                      <td className="py-3.5 px-5 font-mono">
+                        <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 text-[11px]">
+                          {st.studentId}
+                        </span>
+                        <span className="block text-[11px] font-sans text-slate-500 mt-0.5">
+                          Roll: {st.rollNo || 'N/A'}
+                        </span>
                       </td>
-                      <td className="py-3 px-4 font-bold text-[#191c1d]">{st.name}</td>
-                      <td className="py-3 px-4 text-[#44474e]">{st.className}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-100 to-blue-100 text-indigo-700 border border-indigo-200 flex items-center justify-center font-bold text-[11px] shrink-0">
+                            {st.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900">{st.name}</p>
+                            <p className="text-[11px] text-slate-500">{st.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <span className="inline-block bg-slate-100 text-slate-700 font-medium px-2.5 py-0.5 rounded-md text-[11px] border border-slate-200/60">
+                          {st.className || st.program || 'BCA Division'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                             st.deviceStatus === 'bound'
-                              ? 'bg-[#a0f399] text-[#005312]'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : st.deviceStatus === 'pending_transfer'
-                              ? 'bg-[#ffdcc6] text-[#723600]'
-                              : 'bg-[#ffdad6] text-[#ba1a1a]'
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
                           }`}
                         >
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            st.deviceStatus === 'bound'
+                              ? 'bg-emerald-500 animate-pulse'
+                              : st.deviceStatus === 'pending_transfer'
+                              ? 'bg-amber-500'
+                              : 'bg-rose-500'
+                          }`} />
                           {st.deviceStatus === 'bound'
-                            ? `Bound (${st.registeredDeviceModel})`
+                            ? `Bound (${st.registeredDeviceModel || 'Hardware 2FA'})`
                             : st.deviceStatus === 'pending_transfer'
                             ? 'Transfer Pending'
                             : 'Unregistered'}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`font-bold ${
-                              st.attendancePercentage < 75 ? 'text-[#ba1a1a]' : 'text-[#031635]'
+                            className={`font-black text-[13px] ${
+                              st.attendancePercentage < 75 ? 'text-rose-600' : 'text-slate-900'
                             }`}
                           >
                             {st.attendancePercentage}%
                           </span>
-                          <div className="w-12 h-1.5 bg-[#f3f4f5] rounded-full overflow-hidden">
+                          <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                             <div
-                              className={`h-full ${
-                                st.attendancePercentage < 75 ? 'bg-[#ba1a1a]' : 'bg-[#005312]'
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                st.attendancePercentage < 75 ? 'bg-rose-500' : 'bg-emerald-500'
                               }`}
-                              style={{ width: `${st.attendancePercentage}%` }}
+                              style={{ width: `${Math.min(st.attendancePercentage, 100)}%` }}
                             />
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-5">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                             st.accountStatus === 'active'
-                              ? 'bg-[#a0f399] text-[#005312]'
-                              : 'bg-[#ffdad6] text-[#ba1a1a]'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
                           }`}
                         >
                           {st.accountStatus}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setStudentForPhotoUpload(st)}
-                            className="px-2.5 py-1 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1"
-                            title="Update Profile Photo"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs flex items-center justify-center gap-1 transition-colors active:scale-95"
+                            title="Update Biometric Photo"
                           >
-                            <span className="material-symbols-outlined text-[14px]">add_a_photo</span>
+                            <span className="material-symbols-outlined text-[13px]">add_a_photo</span>
                             <span>Photo</span>
                           </button>
 
                           <button
                             onClick={() => handleResetStudentDevice(st.id)}
-                            className="px-2.5 py-1 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs transition-colors active:scale-95"
                             title="Reset Hardware Key Binding"
                           >
-                            Reset Device
+                            Reset Key
                           </button>
 
                           <button
                             onClick={() => handleToggleStudentStatus(st.id)}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs ${
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs border transition-colors active:scale-95 ${
                               st.accountStatus === 'active'
-                                ? 'bg-[#ffdad6]/60 text-[#ba1a1a] hover:bg-[#ffdad6]'
-                                : 'bg-[#a0f399]/60 text-[#005312] hover:bg-[#a0f399]'
+                                ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'
                             }`}
                           >
                             {st.accountStatus === 'active' ? 'Suspend' : 'Activate'}
@@ -1172,32 +1318,43 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         )}
 
         {/* ========================================================
-            TAB 3: TEACHER MANAGEMENT
+            TAB 3: FACULTY DIRECTORY & APPOINTMENTS
            ======================================================== */}
         {activeTab === 'teachers' && (
-          <div className="bg-white rounded-3xl border border-[#e1e3e4] shadow-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
-            <div className="p-5 border-b border-[#f3f4f5] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden animate-in fade-in duration-200">
+            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-b from-slate-50/50 to-transparent">
               <div>
-                <h2 className="text-[18px] font-bold text-[#031635]">Faculty Directory & Assignments</h2>
-                <p className="text-[12px] text-[#75777f]">
-                  Course instructors, departments, and session authority
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[18px] font-extrabold text-slate-900 tracking-tight">Faculty Directory & Assignments</h2>
+                  <span className="bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-200">
+                    {teachers.length} Instructors
+                  </span>
+                </div>
+                <p className="text-[12px] text-slate-500 mt-0.5">
+                  Academic instructors, department affiliations, and authorized session permissions
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="Search faculty name or dept..."
-                  value={searchTeacher}
-                  onChange={(e) => setSearchTeacher(e.target.value)}
-                  className="px-3.5 py-1.5 text-[12px] bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl focus:outline-none focus:border-[#031635] w-full sm:w-64"
-                />
+              <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <div className="relative w-full sm:w-64">
+                  <span className="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    search
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search faculty name or dept..."
+                    value={searchTeacher}
+                    onChange={(e) => setSearchTeacher(e.target.value)}
+                    className="w-full pl-9 pr-3.5 py-2 text-[12px] bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                  />
+                </div>
+
                 <button
                   onClick={() => handleOpenAddUserModal('TEACHER')}
-                  className="px-3.5 py-1.5 bg-[#031635] text-white rounded-xl text-[12px] font-bold shadow-sm flex items-center gap-1.5 hover:bg-[#1a2b4b] cursor-pointer transition-colors whitespace-nowrap"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-[12px] font-bold shadow-md shadow-indigo-500/20 flex items-center gap-1.5 hover:shadow cursor-pointer transition-all active:scale-95 whitespace-nowrap"
                 >
                   <span className="material-symbols-outlined text-[16px]">person_add</span>
-                  Add Faculty
+                  <span>Add Faculty</span>
                 </button>
               </div>
             </div>
@@ -1205,51 +1362,70 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-[12px] border-collapse">
                 <thead>
-                  <tr className="bg-[#f8f9fa] text-[#75777f] font-bold text-[11px] uppercase tracking-wider border-b border-[#e1e3e4]">
-                    <th className="py-3 px-5">Faculty ID</th>
-                    <th className="py-3 px-5">Instructor Name</th>
-                    <th className="py-3 px-5">Department</th>
-                    <th className="py-3 px-5">Assigned Classes</th>
-                    <th className="py-3 px-5">Status</th>
-                    <th className="py-3 px-5 text-right">Actions</th>
+                  <tr className="bg-slate-50/75 text-slate-500 font-bold text-[10px] uppercase tracking-wider border-b border-slate-200/80">
+                    <th className="py-3.5 px-5">Faculty ID</th>
+                    <th className="py-3.5 px-5">Instructor Name</th>
+                    <th className="py-3.5 px-5">Department</th>
+                    <th className="py-3.5 px-5">Assigned Classes</th>
+                    <th className="py-3.5 px-5">Status</th>
+                    <th className="py-3.5 px-5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#f3f4f5]">
+                <tbody className="divide-y divide-slate-100">
                   {filteredTeachers.map((tch) => (
-                    <tr key={tch.id} className="hover:bg-[#f8f9fa]/80 transition-colors">
-                      <td className="py-3 px-5 font-mono font-bold text-[#031635]">{tch.teacherId}</td>
-                      <td className="py-3 px-5 font-bold text-[#191c1d]">{tch.name}</td>
-                      <td className="py-3 px-5 text-[#44474e]">{tch.department}</td>
-                      <td className="py-3 px-5">
-                        <div className="flex gap-1 flex-wrap">
+                    <tr key={tch.id} className="hover:bg-slate-50/70 transition-colors group">
+                      <td className="py-3.5 px-5 font-mono">
+                        <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 text-[11px]">
+                          {tch.teacherId}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 text-purple-700 border border-purple-200 flex items-center justify-center font-bold text-[11px] shrink-0">
+                            {tch.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900">{tch.name}</p>
+                            <p className="text-[11px] text-slate-500">{tch.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <span className="inline-block bg-slate-100 text-slate-700 font-medium px-2.5 py-0.5 rounded-md text-[11px] border border-slate-200/60">
+                          {tch.department}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <div className="flex gap-1.5 flex-wrap">
                           {tch.assignedClasses.map((cls, idx) => (
                             <span
                               key={idx}
-                              className="bg-[#eef2ff] text-[#031635] text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#d8e2ff]"
+                              className="bg-indigo-50 text-indigo-700 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-indigo-200/60"
                             >
                               {cls}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="py-3 px-5">
+                      <td className="py-3.5 px-5">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                             tch.accountStatus === 'active'
-                              ? 'bg-[#a0f399] text-[#005312]'
-                              : 'bg-[#ffdad6] text-[#ba1a1a]'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
                           }`}
                         >
+                          <span className={`w-1.5 h-1.5 rounded-full ${tch.accountStatus === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                           {tch.accountStatus}
                         </span>
                       </td>
-                      <td className="py-3 px-5 text-right">
+                      <td className="py-3.5 px-5 text-right">
                         <button
                           onClick={() => handleToggleTeacherStatus(tch.id)}
-                          className={`px-3 py-1 rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs ${
+                          className={`px-3 py-1 rounded-lg text-[11px] font-semibold cursor-pointer shadow-xs border transition-colors active:scale-95 ${
                             tch.accountStatus === 'active'
-                              ? 'bg-[#ffdad6]/60 text-[#ba1a1a] hover:bg-[#ffdad6]'
-                              : 'bg-[#a0f399]/60 text-[#005312] hover:bg-[#a0f399]'
+                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200'
                           }`}
                         >
                           {tch.accountStatus === 'active' ? 'Deactivate' : 'Activate'}
@@ -2225,96 +2401,98 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
       {/* Manually Add User Modal (Student or Teacher) */}
       {showAddUserModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#031635]/50 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-[#e1e3e4] text-[#191c1d] flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-200 text-slate-900 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="p-5 border-b border-[#f3f4f5] flex justify-between items-center bg-[#f8f9fa]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#031635] text-white flex items-center justify-center shadow-sm">
+            <div className="p-5 border-b border-indigo-900/30 flex justify-between items-center bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 flex items-center justify-center shadow-inner">
                   <span className="material-symbols-outlined text-[20px]">person_add</span>
                 </div>
                 <div>
-                  <h3 className="text-[17px] font-bold text-[#031635]">Manually Add User</h3>
-                  <p className="text-[11px] text-[#75777f]">Directly enroll a new student or faculty member</p>
+                  <h3 className="text-[17px] font-extrabold tracking-tight text-white">Enroll New Candidate</h3>
+                  <p className="text-[11px] text-indigo-200/80">Directly provision verified student or faculty credentials</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddUserModal(false)}
-                className="w-8 h-8 rounded-full bg-white border border-[#e1e3e4] text-[#75777f] hover:text-[#031635] flex items-center justify-center cursor-pointer transition-colors"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
 
             {/* Modal Body / Form */}
-            <form onSubmit={handleCreateUser} className="p-5 overflow-y-auto flex flex-col gap-4 text-[12px]">
+            <form onSubmit={handleCreateUser} className="p-6 overflow-y-auto flex flex-col gap-4 text-[12px]">
               {/* Role Selector Tabs */}
               <div>
-                <label className="block font-bold text-[#44474e] mb-1.5 uppercase text-[10px] tracking-wider">Select Account Type</label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-[#f0f2f5] rounded-2xl border border-[#e1e3e4]">
+                <label className="block font-bold text-slate-600 mb-2 uppercase text-[10px] tracking-wider">
+                  Select Account Provisioning Type
+                </label>
+                <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
                   <button
                     type="button"
                     onClick={() => handleRoleChange('STUDENT')}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
                       newUserRole === 'STUDENT'
-                        ? 'bg-[#031635] text-white shadow-sm'
-                        : 'text-[#44474e] hover:text-[#031635]'
+                        ? 'bg-white text-indigo-700 shadow-sm border border-indigo-200 font-extrabold ring-1 ring-indigo-500/20'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">school</span>
-                    Student Account
+                    <span>Student Account</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleRoleChange('TEACHER')}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-bold transition-all cursor-pointer ${
                       newUserRole === 'TEACHER'
-                        ? 'bg-[#031635] text-white shadow-sm'
-                        : 'text-[#44474e] hover:text-[#031635]'
+                        ? 'bg-white text-purple-700 shadow-sm border border-purple-200 font-extrabold ring-1 ring-purple-500/20'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">badge</span>
-                    Faculty / Teacher
+                    <span>Faculty / Teacher</span>
                   </button>
                 </div>
               </div>
 
               {/* Basic Information */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="font-bold text-[#44474e]">Full Name *</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-slate-700 text-[11px]">Full Legal Name *</label>
                   <input
                     type="text"
                     required
-                    placeholder={newUserRole === 'STUDENT' ? 'e.g. Aditi Sharma' : 'e.g. Dr. Ramesh Kumar'}
+                    placeholder={newUserRole === 'STUDENT' ? 'e.g. Aditi Sharma' : 'e.g. Dr. Rajesh Kumar'}
                     value={newUserName}
                     onChange={(e) => setNewUserName(e.target.value)}
-                    className="px-3 py-2 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl outline-none focus:border-[#031635] transition-colors"
+                    className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="font-bold text-[#44474e]">Institutional Email *</label>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-slate-700 text-[11px]">Institutional Email *</label>
                   <input
                     type="email"
                     required
                     placeholder={newUserRole === 'STUDENT' ? 'student@springfield.edu' : 'faculty@springfield.edu'}
                     value={newUserEmail}
                     onChange={(e) => setNewUserEmail(e.target.value)}
-                    className="px-3 py-2 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl outline-none focus:border-[#031635] transition-colors"
+                    className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
               {/* Password with Eye Toggle */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 <div className="flex justify-between items-center">
-                  <label className="font-bold text-[#44474e]">Initial Login Password *</label>
+                  <label className="font-bold text-slate-700 text-[11px]">Initial Temporary Password *</label>
                   <button
                     type="button"
                     onClick={() => setNewUserPassword(newUserRole === 'STUDENT' ? 'StudentKey2024#' : 'FacultyPass2024!')}
-                    className="text-[10px] text-[#031635] font-bold hover:underline cursor-pointer"
+                    className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline cursor-pointer"
                   >
                     Use standard default
                   </button>
@@ -2325,71 +2503,71 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     required
                     value={newUserPassword}
                     onChange={(e) => setNewUserPassword(e.target.value)}
-                    className="w-full px-3 py-2 pr-9 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl outline-none focus:border-[#031635] font-mono text-[12px]"
+                    className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 font-mono text-[12px] text-slate-900 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewUserPassword(!showNewUserPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#75777f] hover:text-[#031635] cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[16px]">
+                    <span className="material-symbols-outlined text-[18px]">
                       {showNewUserPassword ? 'visibility_off' : 'visibility'}
                     </span>
                   </button>
                 </div>
-                <p className="text-[10px] text-[#75777f]">
-                  Default for {newUserRole === 'STUDENT' ? 'students is StudentKey2024#' : 'faculty is FacultyPass2024!'}
+                <p className="text-[10px] text-slate-500">
+                  Standard preset: {newUserRole === 'STUDENT' ? 'StudentKey2024#' : 'FacultyPass2024!'} (User can change on first login)
                 </p>
               </div>
 
               {/* Role-Specific Fields: Student */}
               {newUserRole === 'STUDENT' && (
-                <div className="p-3.5 bg-[#f0f4fd] border border-[#d8e2ff] rounded-2xl flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-[#d8e2ff] pb-2">
-                    <span className="font-bold text-[11px] text-[#031635] uppercase tracking-wider flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px]">school</span>
+                <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl flex flex-col gap-3 shadow-inner">
+                  <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                    <span className="font-bold text-[11px] text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-indigo-600">school</span>
                       Academic Enrollment Details
                     </span>
                     <button
                       type="button"
                       onClick={() => setNewUserStudentId(`STU-2024-${Math.floor(1000 + Math.random() * 9000)}`)}
-                      className="text-[10px] text-[#031635] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[12px]">refresh</span>
+                      <span className="material-symbols-outlined text-[13px]">refresh</span>
                       Regenerate ID
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Student ID *</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Student ID *</label>
                       <input
                         type="text"
                         required
                         value={newUserStudentId}
                         onChange={(e) => setNewUserStudentId(e.target.value)}
-                        className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none font-mono"
+                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none font-mono text-[11px] font-bold focus:border-indigo-600"
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Roll Number</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Roll Number</label>
                       <input
                         type="text"
                         placeholder="e.g. BCA-048"
                         value={newUserRollNo}
                         onChange={(e) => setNewUserRollNo(e.target.value)}
-                        className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none"
+                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none text-[11px] focus:border-indigo-600"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Program</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Program</label>
                       <select
                         value={newUserProgram}
                         onChange={(e) => setNewUserProgram(e.target.value)}
-                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                        className="px-2 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-medium focus:border-indigo-600 cursor-pointer"
                       >
                         <option value="BCA (3rd Sem)">BCA</option>
                         <option value="MCA (1st Sem)">MCA</option>
@@ -2399,22 +2577,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Batch</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Batch</label>
                       <input
                         type="text"
                         value={newUserBatch}
                         onChange={(e) => setNewUserBatch(e.target.value)}
-                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                        className="px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-[11px] focus:border-indigo-600"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Class / Div</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Class / Div</label>
                       <input
                         type="text"
                         value={newUserClassName}
                         onChange={(e) => setNewUserClassName(e.target.value)}
-                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                        className="px-2.5 py-2 bg-white border border-slate-200 rounded-xl text-[11px] focus:border-indigo-600"
                       />
                     </div>
                   </div>
@@ -2423,40 +2601,40 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
               {/* Role-Specific Fields: Teacher */}
               {newUserRole === 'TEACHER' && (
-                <div className="p-3.5 bg-[#f0f4fd] border border-[#d8e2ff] rounded-2xl flex flex-col gap-3">
-                  <div className="flex items-center justify-between border-b border-[#d8e2ff] pb-2">
-                    <span className="font-bold text-[11px] text-[#031635] uppercase tracking-wider flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px]">badge</span>
+                <div className="p-4 bg-purple-50/40 border border-purple-100 rounded-2xl flex flex-col gap-3 shadow-inner">
+                  <div className="flex items-center justify-between border-b border-purple-100 pb-2">
+                    <span className="font-bold text-[11px] text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-purple-600">badge</span>
                       Faculty Assignment Details
                     </span>
                     <button
                       type="button"
                       onClick={() => setNewUserTeacherId(`TCH-${Math.floor(1000 + Math.random() * 9000)}`)}
-                      className="text-[10px] text-[#031635] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                      className="text-[10px] text-purple-600 hover:text-purple-800 font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[12px]">refresh</span>
+                      <span className="material-symbols-outlined text-[13px]">refresh</span>
                       Regenerate ID
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Faculty ID *</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Faculty ID *</label>
                       <input
                         type="text"
                         required
                         value={newUserTeacherId}
                         onChange={(e) => setNewUserTeacherId(e.target.value)}
-                        className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none font-mono"
+                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none font-mono text-[11px] font-bold focus:border-purple-600"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="font-bold text-[#44474e] text-[11px]">Department *</label>
+                      <label className="font-bold text-slate-700 text-[11px]">Department *</label>
                       <select
                         value={newUserDepartment}
                         onChange={(e) => setNewUserDepartment(e.target.value)}
-                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                        className="px-2 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-medium focus:border-purple-600 cursor-pointer"
                       >
                         <option value="Computer Science">Computer Science</option>
                         <option value="Information Technology">Information Technology</option>
@@ -2468,36 +2646,36 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="font-bold text-[#44474e] text-[11px]">Assigned Classes (comma separated)</label>
+                    <label className="font-bold text-slate-700 text-[11px]">Assigned Classes (comma separated)</label>
                     <input
                       type="text"
                       placeholder="e.g. BCA Sem 3 - Div A, MCA Sem 1"
                       value={newUserAssignedClasses}
                       onChange={(e) => setNewUserAssignedClasses(e.target.value)}
-                      className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none text-[11px]"
+                      className="px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none text-[11px] focus:border-purple-600"
                     />
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end items-center gap-2.5 pt-3 border-t border-[#f3f4f5] mt-1">
+              <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-100 mt-2">
                 <button
                   type="button"
                   onClick={() => setShowAddUserModal(false)}
-                  className="px-4 py-2 text-[#75777f] hover:text-[#031635] font-bold cursor-pointer transition-colors"
+                  className="px-4 py-2 text-slate-600 hover:text-slate-900 font-bold cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingUser}
-                  className="px-5 py-2.5 bg-[#031635] hover:bg-[#1a2b4b] text-white font-bold rounded-xl shadow-sm cursor-pointer transition-all flex items-center gap-2 disabled:opacity-60"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-xl shadow-md shadow-indigo-500/25 cursor-pointer transition-all active:scale-95 flex items-center gap-2 disabled:opacity-60"
                 >
                   {isSubmittingUser ? (
                     <>
                       <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                      <span>Creating User...</span>
+                      <span>Enrolling User...</span>
                     </>
                   ) : (
                     <>
