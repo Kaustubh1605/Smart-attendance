@@ -94,7 +94,7 @@ public class QRVerificationService {
         DynamicQRChallenge challenge = attempt.getChallenge();
         long attemptStartTime = attempt.getAttemptStartTime();
         
-        if (!verifyChallengeSignature(challenge)) {
+        if (challenge == null || !verifyChallengeSignature(challenge)) {
             return createFailedResult("Security challenge integrity check failed (Tampered or invalid signature).", "tampered", attempt, completionTime, 0);
         }
         
