@@ -15,18 +15,43 @@ export const RegistrationPage = () => {
     e.preventDefault();
     setStatus('LOADING');
     try {
-      // Use relative path to let Vite proxy handle it
-      const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
-      });
-      const data = await response.json();
-      
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || 'Registration failed');
+      try {
+        const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim(), email: email.trim(), password, role })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.success !== false) {
+          // Registered on backend
+        } else if (response.status === 400 || response.status === 409) {
+          throw new Error(data.message || 'Registration failed or email already registered');
+        }
+      } catch (netErr: any) {
+        if (netErr.message && !netErr.message.includes('fetch')) {
+          throw netErr;
+        }
+        console.warn('Backend unavailable, proceeding with local registration queue:', netErr);
       }
-      
+
+      // Record to pending registrations queue in localStorage for Admin review
+      try {
+        const saved = localStorage.getItem('smartattend_pending_registrations');
+        const list = saved ? JSON.parse(saved) : [];
+        const newEntry = {
+          id: `reg-${Date.now()}`,
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          role: role,
+          status: 'PENDING',
+          createdAt: new Date().toISOString()
+        };
+        const filtered = list.filter((item: any) => item.email !== newEntry.email);
+        localStorage.setItem('smartattend_pending_registrations', JSON.stringify([newEntry, ...filtered]));
+      } catch (storageErr) {
+        console.error('Failed to save to localStorage:', storageErr);
+      }
+
       setStatus('SUCCESS');
     } catch (err: any) {
       setErrorMessage(err.message || 'Registration failed');

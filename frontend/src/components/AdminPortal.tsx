@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LOGO_URL,
   MOCK_ADMIN_STUDENTS,
@@ -54,17 +54,90 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     'dashboard' | 'registrations' | 'students' | 'teachers' | 'classes' | 'classrooms' | 'timetable' | 'devices' | 'analytics' | 'audit' | 'settings'
   >('dashboard');
 
-  // State for data management
-  const [students, setStudents] = useState<AdminStudent[]>(MOCK_ADMIN_STUDENTS);
-  const [teachers, setTeachers] = useState<AdminTeacher[]>(MOCK_ADMIN_TEACHERS);
+  // State for data management (with localStorage persistence)
+  const [students, setStudents] = useState<AdminStudent[]>(() => {
+    try {
+      const saved = localStorage.getItem('smartattend_admin_students');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return MOCK_ADMIN_STUDENTS;
+  });
+
+  const [teachers, setTeachers] = useState<AdminTeacher[]>(() => {
+    try {
+      const saved = localStorage.getItem('smartattend_admin_teachers');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return MOCK_ADMIN_TEACHERS;
+  });
+
   const [classrooms, setClassrooms] = useState<ClassroomItem[]>(MOCK_CLASSROOMS);
   const [timetable, setTimetable] = useState<TimetableSlot[]>(MOCK_TIMETABLE);
   const [settings, setSettings] = useState<InstitutionSettings>(MOCK_INSTITUTION_SETTINGS);
 
-  const [pendingUsers, setPendingUsers] = useState([
-    { id: '1', name: 'Alice Smith', email: 'alice.smith@university.edu', role: 'STUDENT', status: 'PENDING', createdAt: '2026-08-21T10:00:00Z' },
-    { id: '2', name: 'Bob Johnson', email: 'bob.j@university.edu', role: 'TEACHER', status: 'PENDING', createdAt: '2026-08-21T11:30:00Z' }
-  ]);
+  const [pendingUsers, setPendingUsers] = useState<
+    Array<{ id: string; name: string; email: string; role: 'STUDENT' | 'TEACHER' | 'ADMIN'; status: string; createdAt: string }>
+  >(() => {
+    try {
+      const saved = localStorage.getItem('smartattend_pending_registrations');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      { id: '1', name: 'Alice Smith', email: 'alice.smith@university.edu', role: 'STUDENT', status: 'PENDING', createdAt: '2026-08-21T10:00:00Z' },
+      { id: '2', name: 'Bob Johnson', email: 'bob.j@university.edu', role: 'TEACHER', status: 'PENDING', createdAt: '2026-08-21T11:30:00Z' }
+    ];
+  });
+
+  // Sync state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('smartattend_admin_students', JSON.stringify(students));
+    } catch {}
+  }, [students]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('smartattend_admin_teachers', JSON.stringify(teachers));
+    } catch {}
+  }, [teachers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('smartattend_pending_registrations', JSON.stringify(pendingUsers));
+    } catch {}
+  }, [pendingUsers]);
+
+  // Real-time cross-tab sync for pending registrations from self-service registration
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'smartattend_pending_registrations' && e.newValue) {
+        try {
+          setPendingUsers(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Manual User Addition Modal State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserRole, setNewUserRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('StudentKey2024#');
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
+  // Student-specific fields
+  const [newUserStudentId, setNewUserStudentId] = useState('');
+  const [newUserRollNo, setNewUserRollNo] = useState('');
+  const [newUserProgram, setNewUserProgram] = useState('BCA (3rd Sem)');
+  const [newUserBatch, setNewUserBatch] = useState('2024-2027');
+  const [newUserClassName, setNewUserClassName] = useState('BCA Sem 3 - Div A');
+  // Teacher-specific fields
+  const [newUserTeacherId, setNewUserTeacherId] = useState('');
+  const [newUserDepartment, setNewUserDepartment] = useState('Computer Science');
+  const [newUserAssignedClasses, setNewUserAssignedClasses] = useState('BCA Sem 3 - Div A');
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
 
   // Filters & Searches
   const [searchStudent, setSearchStudent] = useState('');
@@ -201,14 +274,219 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     showToast('Faculty status updated');
   };
 
+  const handleOpenAddUserModal = (defaultRole: 'STUDENT' | 'TEACHER' = 'STUDENT') => {
+    setNewUserRole(defaultRole);
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPassword(defaultRole === 'STUDENT' ? 'StudentKey2024#' : 'FacultyPass2024!');
+    setShowNewUserPassword(false);
+    setNewUserStudentId(`STU-2024-${Math.floor(1000 + Math.random() * 9000)}`);
+    setNewUserRollNo(`BCA-${Math.floor(10 + Math.random() * 90)}`);
+    setNewUserProgram('BCA (3rd Sem)');
+    setNewUserBatch('2024-2027');
+    setNewUserClassName('BCA Sem 3 - Div A');
+    setNewUserTeacherId(`TCH-${Math.floor(1000 + Math.random() * 9000)}`);
+    setNewUserDepartment('Computer Science');
+    setNewUserAssignedClasses('BCA Sem 3 - Div A');
+    setShowAddUserModal(true);
+  };
+
+  const handleRoleChange = (role: 'STUDENT' | 'TEACHER') => {
+    setNewUserRole(role);
+    if (role === 'STUDENT') {
+      if (!newUserPassword || newUserPassword === 'FacultyPass2024!') {
+        setNewUserPassword('StudentKey2024#');
+      }
+      if (!newUserStudentId) {
+        setNewUserStudentId(`STU-2024-${Math.floor(1000 + Math.random() * 9000)}`);
+      }
+    } else {
+      if (!newUserPassword || newUserPassword === 'StudentKey2024#') {
+        setNewUserPassword('FacultyPass2024!');
+      }
+      if (!newUserTeacherId) {
+        setNewUserTeacherId(`TCH-${Math.floor(1000 + Math.random() * 9000)}`);
+      }
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      showToast('Please enter both name and email.');
+      return;
+    }
+
+    setIsSubmittingUser(true);
+    let backendSyncOk = false;
+
+    try {
+      const response = await fetch((import.meta.env.VITE_API_URL || '') + '/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newUserName.trim(),
+          email: newUserEmail.trim(),
+          password: newUserPassword || (newUserRole === 'STUDENT' ? 'StudentKey2024#' : 'FacultyPass2024!'),
+          role: newUserRole,
+        }),
+      });
+      if (response.ok) {
+        backendSyncOk = true;
+      }
+    } catch {
+      backendSyncOk = false;
+    }
+
+    if (newUserRole === 'STUDENT') {
+      const studentId = newUserStudentId.trim() || `STU-2024-${Math.floor(1000 + Math.random() * 9000)}`;
+      const rollNo = newUserRollNo.trim() || `BCA-${Math.floor(10 + Math.random() * 90)}`;
+      const newStudent: AdminStudent = {
+        id: `ast-${Date.now()}`,
+        studentId,
+        name: newUserName.trim(),
+        email: newUserEmail.trim().toLowerCase(),
+        program: newUserProgram.trim() || 'BCA (3rd Sem)',
+        batch: newUserBatch.trim() || '2024-2027',
+        rollNo,
+        className: newUserClassName.trim() || 'BCA Sem 3 - Div A',
+        deviceStatus: 'bound',
+        registeredDeviceModel: 'Standard Verified Hardware',
+        accountStatus: 'active',
+        attendancePercentage: 100,
+      };
+
+      setStudents((prev) => [newStudent, ...prev]);
+      onAddAuditLog({
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'admin@springfield.edu',
+        role: 'ADMIN',
+        action: 'MANUAL_STUDENT_ENROLL',
+        entity: 'StudentProfile',
+        entityId: newStudent.studentId,
+        newState: `Manually enrolled Student ${newStudent.name} (${newStudent.studentId}) in ${newStudent.className}${backendSyncOk ? ' [Backend Synced]' : ''}`,
+        ipAddress: '192.168.1.10',
+      });
+      showToast(`Student ${newStudent.name} successfully created & enrolled!`);
+    } else {
+      const teacherId = newUserTeacherId.trim() || `TCH-${Math.floor(1000 + Math.random() * 9000)}`;
+      const assigned = newUserAssignedClasses
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+
+      const newTeacher: AdminTeacher = {
+        id: `tch-${Date.now()}`,
+        teacherId,
+        name: newUserName.trim(),
+        email: newUserEmail.trim().toLowerCase(),
+        department: newUserDepartment.trim() || 'Computer Science',
+        assignedClasses: assigned.length > 0 ? assigned : ['BCA Sem 3 - Div A'],
+        accountStatus: 'active',
+      };
+
+      setTeachers((prev) => [newTeacher, ...prev]);
+      onAddAuditLog({
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'admin@springfield.edu',
+        role: 'ADMIN',
+        action: 'MANUAL_FACULTY_ENROLL',
+        entity: 'TeacherProfile',
+        entityId: newTeacher.teacherId,
+        newState: `Manually appointed Faculty ${newTeacher.name} to ${newTeacher.department}${backendSyncOk ? ' [Backend Synced]' : ''}`,
+        ipAddress: '192.168.1.10',
+      });
+      showToast(`Faculty ${newTeacher.name} successfully added!`);
+    }
+
+    setIsSubmittingUser(false);
+    setShowAddUserModal(false);
+  };
+
   const handleApproveUser = (id: string) => {
-    setPendingUsers(prev => prev.filter(u => u.id !== id));
-    showToast('User approved successfully. Profile created.');
+    const user = pendingUsers.find((u) => u.id === id);
+    if (!user) return;
+
+    if (user.role === 'STUDENT') {
+      const studentId = `STU-2024-${Math.floor(1000 + Math.random() * 9000)}`;
+      const rollNo = `BCA-${Math.floor(10 + Math.random() * 90)}`;
+      const newStudent: AdminStudent = {
+        id: `ast-${Date.now()}`,
+        studentId,
+        name: user.name,
+        email: user.email,
+        program: 'BCA (3rd Sem)',
+        batch: '2024-2027',
+        rollNo,
+        className: 'BCA Sem 3 - Div A',
+        deviceStatus: 'bound',
+        registeredDeviceModel: 'Android Device (Auto-bound)',
+        accountStatus: 'active',
+        attendancePercentage: 100,
+      };
+
+      setStudents((prev) => [newStudent, ...prev]);
+      onAddAuditLog({
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'admin@springfield.edu',
+        role: 'ADMIN',
+        action: 'REGISTRATION_APPROVED',
+        entity: 'StudentProfile',
+        entityId: newStudent.studentId,
+        newState: `Approved registration for student ${user.name} (${user.email})`,
+        ipAddress: '192.168.1.10',
+      });
+      showToast(`Student ${user.name} approved & added to Student Directory!`);
+    } else {
+      const teacherId = `TCH-${Math.floor(1000 + Math.random() * 9000)}`;
+      const newTeacher: AdminTeacher = {
+        id: `tch-${Date.now()}`,
+        teacherId,
+        name: user.name,
+        email: user.email,
+        department: 'Computer Science',
+        assignedClasses: ['BCA Sem 3 - Div A'],
+        accountStatus: 'active',
+      };
+
+      setTeachers((prev) => [newTeacher, ...prev]);
+      onAddAuditLog({
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'admin@springfield.edu',
+        role: 'ADMIN',
+        action: 'REGISTRATION_APPROVED',
+        entity: 'TeacherProfile',
+        entityId: newTeacher.teacherId,
+        newState: `Approved registration for faculty ${user.name} (${user.email})`,
+        ipAddress: '192.168.1.10',
+      });
+      showToast(`Faculty ${user.name} approved & added to Faculty Directory!`);
+    }
+
+    setPendingUsers((prev) => prev.filter((u) => u.id !== id));
   };
 
   const handleRejectUser = (id: string) => {
-    setPendingUsers(prev => prev.filter(u => u.id !== id));
-    showToast('User registration rejected.');
+    const user = pendingUsers.find((u) => u.id === id);
+    setPendingUsers((prev) => prev.filter((u) => u.id !== id));
+    if (user) {
+      onAddAuditLog({
+        id: generateUniqueId('aud'),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+        actor: 'admin@springfield.edu',
+        role: 'ADMIN',
+        action: 'REGISTRATION_REJECTED',
+        entity: 'RegistrationQueue',
+        entityId: id,
+        newState: `Rejected pending registration for ${user.name} (${user.email})`,
+        ipAddress: '192.168.1.10',
+      });
+      showToast(`Registration request for ${user.name} was rejected.`);
+    }
   };
 
   // Device Queue Actions
@@ -302,9 +580,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
       s.name.toLowerCase().includes(searchStudent.toLowerCase()) ||
-      s.rollNo.toLowerCase().includes(searchStudent.toLowerCase()) ||
+      (s.rollNo || '').toLowerCase().includes(searchStudent.toLowerCase()) ||
       s.studentId.toLowerCase().includes(searchStudent.toLowerCase()) ||
-      s.className.toLowerCase().includes(searchStudent.toLowerCase());
+      (s.className || '').toLowerCase().includes(searchStudent.toLowerCase());
     if (!matchesSearch) return false;
     if (studentFilter === 'active') return s.accountStatus === 'active';
     if (studentFilter === 'suspended') return s.accountStatus === 'suspended';
@@ -682,8 +960,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   <p className="text-[12px] text-[#75777f]">Review and approve new student and teacher accounts.</p>
                 </div>
                 <button 
-                  onClick={() => showToast('Quick add mode enabled.')}
-                  className="px-4 py-2 bg-[#031635] text-white rounded-xl text-[13px] font-bold shadow-sm flex items-center gap-1 hover:bg-[#1a2b4b]"
+                  onClick={() => handleOpenAddUserModal('STUDENT')}
+                  className="px-4 py-2 bg-[#031635] text-white rounded-xl text-[13px] font-bold shadow-sm flex items-center gap-1.5 hover:bg-[#1a2b4b] cursor-pointer transition-colors"
                 >
                   <span className="material-symbols-outlined text-[18px]">person_add</span>
                   Directly Add User
@@ -754,7 +1032,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </p>
               </div>
 
-              {/* Search and Filters */}
+              {/* Search, Filters, and Add Student */}
               <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
                 <input
                   type="text"
@@ -774,6 +1052,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   <option value="suspended">Suspended Accounts</option>
                   <option value="low_attendance">Below 75% Attendance</option>
                 </select>
+
+                <button
+                  onClick={() => handleOpenAddUserModal('STUDENT')}
+                  className="px-3.5 py-1.5 bg-[#031635] text-white rounded-xl text-[12px] font-bold shadow-sm flex items-center gap-1.5 hover:bg-[#1a2b4b] cursor-pointer transition-colors whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-[16px]">person_add</span>
+                  Add Student
+                </button>
               </div>
             </div>
 
@@ -898,13 +1184,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </p>
               </div>
 
-              <input
-                type="text"
-                placeholder="Search faculty name or dept..."
-                value={searchTeacher}
-                onChange={(e) => setSearchTeacher(e.target.value)}
-                className="px-3.5 py-1.5 text-[12px] bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl focus:outline-none focus:border-[#031635] w-full sm:w-64"
-              />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="Search faculty name or dept..."
+                  value={searchTeacher}
+                  onChange={(e) => setSearchTeacher(e.target.value)}
+                  className="px-3.5 py-1.5 text-[12px] bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl focus:outline-none focus:border-[#031635] w-full sm:w-64"
+                />
+                <button
+                  onClick={() => handleOpenAddUserModal('TEACHER')}
+                  className="px-3.5 py-1.5 bg-[#031635] text-white rounded-xl text-[12px] font-bold shadow-sm flex items-center gap-1.5 hover:bg-[#1a2b4b] cursor-pointer transition-colors whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-[16px]">person_add</span>
+                  Add Faculty
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -1924,6 +2219,295 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                  <span className="font-bold">Formats:</span> JPG, PNG files only. <span className="font-bold">Max size:</span> 2MB.
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manually Add User Modal (Student or Teacher) */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#031635]/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-[#e1e3e4] text-[#191c1d] flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#f3f4f5] flex justify-between items-center bg-[#f8f9fa]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#031635] text-white flex items-center justify-center shadow-sm">
+                  <span className="material-symbols-outlined text-[20px]">person_add</span>
+                </div>
+                <div>
+                  <h3 className="text-[17px] font-bold text-[#031635]">Manually Add User</h3>
+                  <p className="text-[11px] text-[#75777f]">Directly enroll a new student or faculty member</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddUserModal(false)}
+                className="w-8 h-8 rounded-full bg-white border border-[#e1e3e4] text-[#75777f] hover:text-[#031635] flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            {/* Modal Body / Form */}
+            <form onSubmit={handleCreateUser} className="p-5 overflow-y-auto flex flex-col gap-4 text-[12px]">
+              {/* Role Selector Tabs */}
+              <div>
+                <label className="block font-bold text-[#44474e] mb-1.5 uppercase text-[10px] tracking-wider">Select Account Type</label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-[#f0f2f5] rounded-2xl border border-[#e1e3e4]">
+                  <button
+                    type="button"
+                    onClick={() => handleRoleChange('STUDENT')}
+                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                      newUserRole === 'STUDENT'
+                        ? 'bg-[#031635] text-white shadow-sm'
+                        : 'text-[#44474e] hover:text-[#031635]'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">school</span>
+                    Student Account
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRoleChange('TEACHER')}
+                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl font-bold transition-all cursor-pointer ${
+                      newUserRole === 'TEACHER'
+                        ? 'bg-[#031635] text-white shadow-sm'
+                        : 'text-[#44474e] hover:text-[#031635]'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">badge</span>
+                    Faculty / Teacher
+                  </button>
+                </div>
+              </div>
+
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="font-bold text-[#44474e]">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={newUserRole === 'STUDENT' ? 'e.g. Aditi Sharma' : 'e.g. Dr. Ramesh Kumar'}
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    className="px-3 py-2 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl outline-none focus:border-[#031635] transition-colors"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-bold text-[#44474e]">Institutional Email *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder={newUserRole === 'STUDENT' ? 'student@springfield.edu' : 'faculty@springfield.edu'}
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    className="px-3 py-2 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl outline-none focus:border-[#031635] transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Password with Eye Toggle */}
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-center">
+                  <label className="font-bold text-[#44474e]">Initial Login Password *</label>
+                  <button
+                    type="button"
+                    onClick={() => setNewUserPassword(newUserRole === 'STUDENT' ? 'StudentKey2024#' : 'FacultyPass2024!')}
+                    className="text-[10px] text-[#031635] font-bold hover:underline cursor-pointer"
+                  >
+                    Use standard default
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showNewUserPassword ? 'text' : 'password'}
+                    required
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className="w-full px-3 py-2 pr-9 bg-[#f8f9fa] border border-[#e1e3e4] rounded-xl outline-none focus:border-[#031635] font-mono text-[12px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewUserPassword(!showNewUserPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#75777f] hover:text-[#031635] cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {showNewUserPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-[#75777f]">
+                  Default for {newUserRole === 'STUDENT' ? 'students is StudentKey2024#' : 'faculty is FacultyPass2024!'}
+                </p>
+              </div>
+
+              {/* Role-Specific Fields: Student */}
+              {newUserRole === 'STUDENT' && (
+                <div className="p-3.5 bg-[#f0f4fd] border border-[#d8e2ff] rounded-2xl flex flex-col gap-3">
+                  <div className="flex items-center justify-between border-b border-[#d8e2ff] pb-2">
+                    <span className="font-bold text-[11px] text-[#031635] uppercase tracking-wider flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[15px]">school</span>
+                      Academic Enrollment Details
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setNewUserStudentId(`STU-2024-${Math.floor(1000 + Math.random() * 9000)}`)}
+                      className="text-[10px] text-[#031635] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[12px]">refresh</span>
+                      Regenerate ID
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Student ID *</label>
+                      <input
+                        type="text"
+                        required
+                        value={newUserStudentId}
+                        onChange={(e) => setNewUserStudentId(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none font-mono"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Roll Number</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. BCA-048"
+                        value={newUserRollNo}
+                        onChange={(e) => setNewUserRollNo(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Program</label>
+                      <select
+                        value={newUserProgram}
+                        onChange={(e) => setNewUserProgram(e.target.value)}
+                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                      >
+                        <option value="BCA (3rd Sem)">BCA</option>
+                        <option value="MCA (1st Sem)">MCA</option>
+                        <option value="B.Tech CS">B.Tech CS</option>
+                        <option value="BBA">BBA</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Batch</label>
+                      <input
+                        type="text"
+                        value={newUserBatch}
+                        onChange={(e) => setNewUserBatch(e.target.value)}
+                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Class / Div</label>
+                      <input
+                        type="text"
+                        value={newUserClassName}
+                        onChange={(e) => setNewUserClassName(e.target.value)}
+                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Role-Specific Fields: Teacher */}
+              {newUserRole === 'TEACHER' && (
+                <div className="p-3.5 bg-[#f0f4fd] border border-[#d8e2ff] rounded-2xl flex flex-col gap-3">
+                  <div className="flex items-center justify-between border-b border-[#d8e2ff] pb-2">
+                    <span className="font-bold text-[11px] text-[#031635] uppercase tracking-wider flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[15px]">badge</span>
+                      Faculty Assignment Details
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setNewUserTeacherId(`TCH-${Math.floor(1000 + Math.random() * 9000)}`)}
+                      className="text-[10px] text-[#031635] font-bold hover:underline flex items-center gap-0.5 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[12px]">refresh</span>
+                      Regenerate ID
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Faculty ID *</label>
+                      <input
+                        type="text"
+                        required
+                        value={newUserTeacherId}
+                        onChange={(e) => setNewUserTeacherId(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none font-mono"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-bold text-[#44474e] text-[11px]">Department *</label>
+                      <select
+                        value={newUserDepartment}
+                        onChange={(e) => setNewUserDepartment(e.target.value)}
+                        className="px-2 py-1.5 bg-white border border-[#e1e3e4] rounded-xl text-[11px]"
+                      >
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Electronics & Comm.">Electronics & Comm.</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Management Studies">Management Studies</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="font-bold text-[#44474e] text-[11px]">Assigned Classes (comma separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. BCA Sem 3 - Div A, MCA Sem 1"
+                      value={newUserAssignedClasses}
+                      onChange={(e) => setNewUserAssignedClasses(e.target.value)}
+                      className="px-3 py-1.5 bg-white border border-[#e1e3e4] rounded-xl outline-none text-[11px]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end items-center gap-2.5 pt-3 border-t border-[#f3f4f5] mt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="px-4 py-2 text-[#75777f] hover:text-[#031635] font-bold cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingUser}
+                  className="px-5 py-2.5 bg-[#031635] hover:bg-[#1a2b4b] text-white font-bold rounded-xl shadow-sm cursor-pointer transition-all flex items-center gap-2 disabled:opacity-60"
+                >
+                  {isSubmittingUser ? (
+                    <>
+                      <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                      <span>Creating User...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
+                      <span>Create & Enroll {newUserRole === 'STUDENT' ? 'Student' : 'Faculty'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

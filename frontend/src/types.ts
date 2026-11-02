@@ -251,9 +251,12 @@ export interface AdminStudent {
   email: string;
   program: string;
   batch: string;
-  deviceStatus: 'verified' | 'pending' | 'revoked';
+  rollNo?: string;
+  className?: string;
+  deviceStatus: 'verified' | 'pending' | 'revoked' | 'bound' | 'pending_transfer';
   accountStatus: 'active' | 'suspended';
   attendancePercentage: number;
+  registeredDeviceModel?: string;
 }
 
 export interface AdminTeacher {
