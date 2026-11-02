@@ -59,44 +59,51 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen justify-center items-center px-4 bg-[#f3f4f5] py-12 text-[#191c1d] font-sans">
-      <div className="w-full max-w-lg mx-auto flex flex-col gap-6">
+    <div 
+      className="flex flex-col w-full min-h-screen justify-center items-center px-4 py-12 font-sans relative"
+      style={{
+        background: "linear-gradient(135deg, rgba(2, 6, 23, 0.94), rgba(15, 23, 42, 0.96)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&auto=format&fit=crop&q=80') center/cover no-repeat fixed",
+      }}
+    >
+      <div className="w-full max-w-lg mx-auto flex flex-col gap-6 relative z-10">
         {/* Institutional Admin Brand Header */}
         <div className="flex flex-col items-center text-center gap-2">
           <div className="relative">
-            <img alt="SmartAttend" className="h-12 w-auto mb-1 drop-shadow-sm" src={LOGO_URL} />
-            <span className="absolute -bottom-1 -right-2 bg-[#031635] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-widest border border-white">
+            <div className="p-2.5 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-xl mb-1">
+              <img alt="SmartAttend" className="h-10 w-auto drop-shadow-md brightness-200" src={LOGO_URL} />
+            </div>
+            <span className="absolute -bottom-1 -right-2 bg-indigo-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/40 shadow-sm">
               Admin
             </span>
           </div>
-          <h1 className="text-[26px] font-extrabold text-[#031635] tracking-tight">
+          <h1 className="text-[28px] font-black text-white tracking-tight drop-shadow-sm">
             Institutional Administration
           </h1>
-          <p className="text-[13px] text-[#75777f] max-w-sm">
+          <p className="text-[13px] text-indigo-200/90 font-medium max-w-sm">
             Springfield University • Central IT & Security Operations Clearance
           </p>
         </div>
 
         {/* Admin Login Card */}
-        <div className="bg-white rounded-3xl border border-[#e1e3e4] p-7 md:p-8 flex flex-col gap-5 shadow-lg relative overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/40 p-7 md:p-8 flex flex-col gap-5 shadow-2xl relative overflow-hidden">
           {/* Top clearance ribbon */}
-          <div className="flex items-center justify-between pb-3 border-b border-[#f3f4f5]">
-            <div className="flex items-center gap-2 text-[11px] font-bold text-[#031635] uppercase tracking-wider">
-              <span className="material-symbols-outlined text-[16px] text-[#1b6d24]">shield_locked</span>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-800 uppercase tracking-wider">
+              <span className="material-symbols-outlined text-[16px] text-emerald-600">shield_locked</span>
               <span>IAM & Audit Clearance Level 3</span>
             </div>
             <button
               type="button"
               onClick={handleQuickFill}
-              className="text-[11px] font-bold text-[#031635] bg-[#eef2ff] hover:bg-[#d8e2ff] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+              className="text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-xl transition-all cursor-pointer border border-indigo-200/60 shadow-xs"
             >
               Fill Demo Admin
             </button>
           </div>
 
           {errorMsg && (
-            <div className="p-3.5 bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#ba1a1a] rounded-2xl text-[12px] font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">error</span>
+            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-[12px] font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-rose-600">error</span>
               <span>{errorMsg}</span>
             </div>
           )}

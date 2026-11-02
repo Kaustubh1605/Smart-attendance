@@ -7,7 +7,13 @@ export const AdminPortalPage = (props: any) => {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div
+      className={`w-full transition-all duration-300 ${
+        props.isPhoneFrame
+          ? 'max-w-[430px] my-6 border-8 border-slate-900 rounded-[48px] shadow-2xl overflow-hidden min-h-[880px] bg-white relative ring-1 ring-slate-800'
+          : 'w-full'
+      }`}
+    >
       {!props.isAdminLoggedIn ? (
         <AdminLogin
           onLoginSuccess={(name, email, token) => {
@@ -27,6 +33,6 @@ export const AdminPortalPage = (props: any) => {
           onLogout={() => props.setIsAdminLoggedIn(false)}
         />
       )}
-    </>
+    </div>
   );
 };

@@ -128,11 +128,12 @@ export const TODAY_LECTURES: Lecture[] = [
 ];
 
 export const INITIAL_ATTENDANCE_HISTORY: AttendanceRecord[] = [
+  // Database Systems (BCA 301) - November
   {
-    id: 'rec-001',
-    date: '2023-10-24',
-    day: '24',
-    month: 'Oct',
+    id: 'rec-101',
+    date: '2026-11-02',
+    day: '02',
+    month: 'Nov',
     lectureCode: 'BCA 301',
     subjectName: 'Database Systems',
     lectureType: 'Lecture - Room 402',
@@ -141,47 +142,450 @@ export const INITIAL_ATTENDANCE_HISTORY: AttendanceRecord[] = [
     evidence: {
       timestamp: '10:02 AM',
       locationStatus: 'verified',
-      locationDistanceMeters: 6.2,
+      locationDistanceMeters: 4.8,
       deviceStatus: 'trusted',
       dynamicChallengeVerified: true,
-      challengeLatencyMs: 420,
+      challengeLatencyMs: 380,
       bleDetected: true,
-      bleSignalRssi: -64,
-      cctvFaceMatch: 'match',
-      confidenceScore: 96,
-      notes: 'All signals coherent within lecture geofence & challenge window.'
+      bleSignalRssi: -62,
+      confidenceScore: 98,
+      notes: 'Hardware Keystore attested. BLE Hall Beacon proximity coherent.'
+    }
+  },
+  // Database Systems (BCA 301) - October
+  {
+    id: 'rec-102',
+    date: '2026-10-30',
+    day: '30',
+    month: 'Oct',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
+    evidence: {
+      timestamp: '10:04 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 5.1,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 410,
+      bleDetected: true,
+      confidenceScore: 96
     }
   },
   {
-    id: 'rec-002',
-    date: '2023-10-22',
-    day: '22',
+    id: 'rec-103',
+    date: '2026-10-27',
+    day: '27',
     month: 'Oct',
-    lectureCode: 'ENG 101',
-    subjectName: 'Design & Professional Ethics',
-    lectureType: 'Seminar - Room 204',
-    room: 'Room 204',
-    status: 'needs_review',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
     evidence: {
-      timestamp: '14:15 PM',
-      locationStatus: 'mismatch',
-      locationDistanceMeters: 145.0,
+      timestamp: '10:01 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 3.5,
       deviceStatus: 'trusted',
       dynamicChallengeVerified: true,
-      challengeLatencyMs: 1240,
-      bleDetected: false,
-      cctvFaceMatch: 'unavailable',
-      confidenceScore: 45,
-      notes: 'Location mismatch (WiFi BSSID outside classroom geofence). Dynamic QR scanned with delay.'
-    },
-    hasCorrectionRequest: true,
-    correctionStatus: 'pending',
-    correctionReason: 'Campus WiFi router handover caused false GPS radius error while seated in Row 3.'
+      challengeLatencyMs: 360,
+      bleDetected: true,
+      confidenceScore: 97
+    }
   },
   {
-    id: 'rec-003',
-    date: '2023-10-18',
-    day: '18',
+    id: 'rec-104',
+    date: '2026-10-23',
+    day: '23',
+    month: 'Oct',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'absent',
+    evidence: {
+      timestamp: 'Session Concluded',
+      locationStatus: 'uncertain',
+      locationDistanceMeters: 0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: false,
+      challengeLatencyMs: 0,
+      bleDetected: false,
+      confidenceScore: 0,
+      notes: 'No challenge token verified. Candidate absent.'
+    }
+  },
+  {
+    id: 'rec-105',
+    date: '2026-10-20',
+    day: '20',
+    month: 'Oct',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
+    evidence: {
+      timestamp: '10:03 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 6.0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 450,
+      bleDetected: true,
+      confidenceScore: 95
+    }
+  },
+  // Database Systems (BCA 301) - September
+  {
+    id: 'rec-106',
+    date: '2026-09-28',
+    day: '28',
+    month: 'Sep',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
+    evidence: {
+      timestamp: '10:01 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 4.2,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 390,
+      bleDetected: true,
+      confidenceScore: 98
+    }
+  },
+  {
+    id: 'rec-107',
+    date: '2026-09-21',
+    day: '21',
+    month: 'Sep',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
+    evidence: {
+      timestamp: '10:05 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 7.1,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 480,
+      bleDetected: true,
+      confidenceScore: 94
+    }
+  },
+  {
+    id: 'rec-108',
+    date: '2026-09-14',
+    day: '14',
+    month: 'Sep',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
+    evidence: {
+      timestamp: '10:02 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 5.3,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 370,
+      bleDetected: true,
+      confidenceScore: 97
+    }
+  },
+  // Database Systems (BCA 301) - August
+  {
+    id: 'rec-109',
+    date: '2026-08-28',
+    day: '28',
+    month: 'Aug',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'present',
+    evidence: {
+      timestamp: '10:03 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 4.9,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 400,
+      bleDetected: true,
+      confidenceScore: 96
+    }
+  },
+  {
+    id: 'rec-110',
+    date: '2026-08-21',
+    day: '21',
+    month: 'Aug',
+    lectureCode: 'BCA 301',
+    subjectName: 'Database Systems',
+    lectureType: 'Lecture - Room 402',
+    room: 'Room 402',
+    status: 'absent',
+    evidence: {
+      timestamp: 'Session Concluded',
+      locationStatus: 'uncertain',
+      locationDistanceMeters: 0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: false,
+      challengeLatencyMs: 0,
+      bleDetected: false,
+      confidenceScore: 0
+    }
+  },
+
+  // Data Structures & Algorithms (BCA 302)
+  {
+    id: 'rec-201',
+    date: '2026-11-01',
+    day: '01',
+    month: 'Nov',
+    lectureCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    lectureType: 'Lab - Room 405',
+    room: 'Room 405',
+    status: 'present',
+    evidence: {
+      timestamp: '11:47 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 5.5,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 410,
+      bleDetected: true,
+      confidenceScore: 97
+    }
+  },
+  {
+    id: 'rec-202',
+    date: '2026-10-29',
+    day: '29',
+    month: 'Oct',
+    lectureCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    lectureType: 'Lab - Room 405',
+    room: 'Room 405',
+    status: 'present',
+    evidence: {
+      timestamp: '11:48 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 6.8,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 440,
+      bleDetected: true,
+      confidenceScore: 95
+    }
+  },
+  {
+    id: 'rec-203',
+    date: '2026-10-22',
+    day: '22',
+    month: 'Oct',
+    lectureCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    lectureType: 'Lab - Room 405',
+    room: 'Room 405',
+    status: 'absent',
+    evidence: {
+      timestamp: 'Session Concluded',
+      locationStatus: 'uncertain',
+      locationDistanceMeters: 0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: false,
+      challengeLatencyMs: 0,
+      bleDetected: false,
+      confidenceScore: 0
+    }
+  },
+  {
+    id: 'rec-204',
+    date: '2026-10-15',
+    day: '15',
+    month: 'Oct',
+    lectureCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    lectureType: 'Lab - Room 405',
+    room: 'Room 405',
+    status: 'present',
+    evidence: {
+      timestamp: '11:50 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 8.2,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 510,
+      bleDetected: true,
+      confidenceScore: 92
+    }
+  },
+  {
+    id: 'rec-205',
+    date: '2026-09-25',
+    day: '25',
+    month: 'Sep',
+    lectureCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    lectureType: 'Lab - Room 405',
+    room: 'Room 405',
+    status: 'present',
+    evidence: {
+      timestamp: '11:46 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 4.9,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 380,
+      bleDetected: true,
+      confidenceScore: 98
+    }
+  },
+  {
+    id: 'rec-206',
+    date: '2026-08-25',
+    day: '25',
+    month: 'Aug',
+    lectureCode: 'BCA 302',
+    subjectName: 'Data Structures & Algorithms',
+    lectureType: 'Lab - Room 405',
+    room: 'Room 405',
+    status: 'present',
+    evidence: {
+      timestamp: '11:45 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 5.1,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 390,
+      bleDetected: true,
+      confidenceScore: 96
+    }
+  },
+
+  // Operating Systems & Networks (BCA 304)
+  {
+    id: 'rec-301',
+    date: '2026-10-28',
+    day: '28',
+    month: 'Oct',
+    lectureCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    lectureType: 'Lab - Lab 2',
+    room: 'Lab 2',
+    status: 'present',
+    evidence: {
+      timestamp: '14:02 PM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 4.1,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 350,
+      bleDetected: true,
+      confidenceScore: 98
+    }
+  },
+  {
+    id: 'rec-302',
+    date: '2026-10-21',
+    day: '21',
+    month: 'Oct',
+    lectureCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    lectureType: 'Lab - Lab 2',
+    room: 'Lab 2',
+    status: 'absent',
+    evidence: {
+      timestamp: 'Session Concluded',
+      locationStatus: 'uncertain',
+      locationDistanceMeters: 0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: false,
+      challengeLatencyMs: 0,
+      bleDetected: false,
+      confidenceScore: 0
+    }
+  },
+  {
+    id: 'rec-303',
+    date: '2026-09-23',
+    day: '23',
+    month: 'Sep',
+    lectureCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    lectureType: 'Lab - Lab 2',
+    room: 'Lab 2',
+    status: 'present',
+    evidence: {
+      timestamp: '14:04 PM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 5.0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 400,
+      bleDetected: true,
+      confidenceScore: 97
+    }
+  },
+  {
+    id: 'rec-304',
+    date: '2026-08-26',
+    day: '26',
+    month: 'Aug',
+    lectureCode: 'BCA 304',
+    subjectName: 'Operating Systems & Networks',
+    lectureType: 'Lab - Lab 2',
+    room: 'Lab 2',
+    status: 'present',
+    evidence: {
+      timestamp: '14:01 PM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 3.8,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 320,
+      bleDetected: true,
+      confidenceScore: 99
+    }
+  },
+
+  // Linear Algebra & Statistics (MATH 202)
+  {
+    id: 'rec-401',
+    date: '2026-10-31',
+    day: '31',
+    month: 'Oct',
+    lectureCode: 'MATH 202',
+    subjectName: 'Linear Algebra & Statistics',
+    lectureType: 'Lecture - Hall 1A',
+    room: 'Hall 1A',
+    status: 'present',
+    evidence: {
+      timestamp: '09:02 AM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 6.2,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 430,
+      bleDetected: true,
+      confidenceScore: 96
+    }
+  },
+  {
+    id: 'rec-402',
+    date: '2026-10-24',
+    day: '24',
     month: 'Oct',
     lectureCode: 'MATH 202',
     subjectName: 'Linear Algebra & Statistics',
@@ -196,57 +600,114 @@ export const INITIAL_ATTENDANCE_HISTORY: AttendanceRecord[] = [
       dynamicChallengeVerified: false,
       challengeLatencyMs: 0,
       bleDetected: false,
-      cctvFaceMatch: 'unavailable',
-      confidenceScore: 0,
-      notes: 'No challenge token received during session.'
+      confidenceScore: 0
     }
   },
   {
-    id: 'rec-004',
-    date: '2023-10-15',
-    day: '15',
-    month: 'Oct',
-    lectureCode: 'BCA 302',
-    subjectName: 'Data Structures & Algorithms',
-    lectureType: 'Lab - Room 405',
-    room: 'Room 405',
-    status: 'probable',
-    evidence: {
-      timestamp: '11:58 AM (Late entry)',
-      locationStatus: 'verified',
-      locationDistanceMeters: 12.8,
-      deviceStatus: 'trusted',
-      dynamicChallengeVerified: true,
-      challengeLatencyMs: 890,
-      bleDetected: true,
-      bleSignalRssi: -78,
-      cctvFaceMatch: 'uncertain',
-      confidenceScore: 78,
-      notes: 'Submitted within late grace period. GPS & Bound Device verified.'
-    }
-  },
-  {
-    id: 'rec-005',
-    date: '2023-10-12',
-    day: '12',
-    month: 'Oct',
-    lectureCode: 'BCA 304',
-    subjectName: 'Operating Systems & Networks',
-    lectureType: 'Lab - Lab 2',
-    room: 'Lab 2',
+    id: 'rec-403',
+    date: '2026-09-26',
+    day: '26',
+    month: 'Sep',
+    lectureCode: 'MATH 202',
+    subjectName: 'Linear Algebra & Statistics',
+    lectureType: 'Lecture - Hall 1A',
+    room: 'Hall 1A',
     status: 'present',
     evidence: {
-      timestamp: '14:03 PM',
+      timestamp: '09:05 AM',
       locationStatus: 'verified',
-      locationDistanceMeters: 4.1,
+      locationDistanceMeters: 5.7,
       deviceStatus: 'trusted',
       dynamicChallengeVerified: true,
-      challengeLatencyMs: 310,
+      challengeLatencyMs: 410,
       bleDetected: true,
-      bleSignalRssi: -58,
-      cctvFaceMatch: 'match',
-      confidenceScore: 98,
-      notes: 'All signals verified in room 2.'
+      confidenceScore: 95
+    }
+  },
+
+  // Design & Professional Ethics (ENG 101)
+  {
+    id: 'rec-501',
+    date: '2026-10-26',
+    day: '26',
+    month: 'Oct',
+    lectureCode: 'ENG 101',
+    subjectName: 'Design & Professional Ethics',
+    lectureType: 'Seminar - Room 204',
+    room: 'Room 204',
+    status: 'present',
+    evidence: {
+      timestamp: '14:10 PM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 5.1,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 390,
+      bleDetected: true,
+      confidenceScore: 96
+    }
+  },
+  {
+    id: 'rec-502',
+    date: '2026-10-19',
+    day: '19',
+    month: 'Oct',
+    lectureCode: 'ENG 101',
+    subjectName: 'Design & Professional Ethics',
+    lectureType: 'Seminar - Room 204',
+    room: 'Room 204',
+    status: 'absent',
+    evidence: {
+      timestamp: 'Session Concluded',
+      locationStatus: 'uncertain',
+      locationDistanceMeters: 0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: false,
+      challengeLatencyMs: 0,
+      bleDetected: false,
+      confidenceScore: 0
+    }
+  },
+  {
+    id: 'rec-503',
+    date: '2026-09-22',
+    day: '22',
+    month: 'Sep',
+    lectureCode: 'ENG 101',
+    subjectName: 'Design & Professional Ethics',
+    lectureType: 'Seminar - Room 204',
+    room: 'Room 204',
+    status: 'absent',
+    evidence: {
+      timestamp: 'Session Concluded',
+      locationStatus: 'uncertain',
+      locationDistanceMeters: 0,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: false,
+      challengeLatencyMs: 0,
+      bleDetected: false,
+      confidenceScore: 0
+    }
+  },
+  {
+    id: 'rec-504',
+    date: '2026-08-27',
+    day: '27',
+    month: 'Aug',
+    lectureCode: 'ENG 101',
+    subjectName: 'Design & Professional Ethics',
+    lectureType: 'Seminar - Room 204',
+    room: 'Room 204',
+    status: 'present',
+    evidence: {
+      timestamp: '14:06 PM',
+      locationStatus: 'verified',
+      locationDistanceMeters: 6.4,
+      deviceStatus: 'trusted',
+      dynamicChallengeVerified: true,
+      challengeLatencyMs: 440,
+      bleDetected: true,
+      confidenceScore: 94
     }
   }
 ];

@@ -1078,6 +1078,53 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </p>
                 </div>
 
+                <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-700">
+                  <span className="material-symbols-outlined text-[22px]">pending_actions</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Student Sign-ups</p>
+                  <p className="text-2xl font-black text-indigo-600 mt-0.5">
+                    {pendingUsers.filter(u => u.role === 'STUDENT').length}
+                  </p>
+                </div>
+                <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-200/60 flex items-center justify-center text-indigo-600">
+                  <span className="material-symbols-outlined text-[22px]">school</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Faculty Sign-ups</p>
+                  <p className="text-2xl font-black text-purple-600 mt-0.5">
+                    {pendingUsers.filter(u => u.role === 'TEACHER').length}
+                  </p>
+                </div>
+                <div className="w-11 h-11 rounded-2xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600">
+                  <span className="material-symbols-outlined text-[22px]">badge</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Pending Table Card */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-b from-slate-50/50 to-transparent">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[18px] font-extrabold text-slate-900 tracking-tight">Pending Registrations Queue</h2>
+                    {pendingUsers.length > 0 && (
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-200">
+                        {pendingUsers.length} Action Needed
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[12px] text-slate-500 mt-0.5">
+                    Review self-service student and faculty requests or directly enroll verified credentials.
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-2 flex-wrap">
                   <button 
                     onClick={() => handleOpenAddUserModal('STUDENT', 'PENDING')}

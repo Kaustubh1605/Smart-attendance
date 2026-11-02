@@ -41,23 +41,35 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Frame Toggle for Student App */}
-          {currentRole === 'student' && (
+          {/* Adaptive Viewport Switcher: 16:9 Laptop vs 9:16 Phone */}
+          <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-2xl border border-slate-800 shadow-inner">
             <button
-              onClick={onTogglePhoneFrame}
-              title="Toggle mobile device mockup frame vs full viewport"
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-xl border transition-all cursor-pointer shrink-0 ${
-                isPhoneFrame
-                  ? 'bg-indigo-600/30 border-indigo-400/40 text-indigo-200 shadow-xs'
-                  : 'bg-slate-900/80 border-slate-700/80 text-slate-400 hover:text-white hover:bg-slate-800'
+              type="button"
+              onClick={() => { if (isPhoneFrame) onTogglePhoneFrame(); }}
+              title="16:9 Laptop / Desktop Widescreen Layout"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-xl transition-all cursor-pointer ${
+                !isPhoneFrame
+                  ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
-              <span className="material-symbols-outlined text-[15px]">
-                {isPhoneFrame ? 'devices' : 'stay_current_portrait'}
-              </span>
-              <span>{isPhoneFrame ? 'Device Frame ON' : 'Full Width'}</span>
+              <span className="material-symbols-outlined text-[15px]">laptop</span>
+              <span className="hidden sm:inline">16:9 Laptop</span>
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => { if (!isPhoneFrame) onTogglePhoneFrame(); }}
+              title="9:16 Phone Mobile Layout"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-xl transition-all cursor-pointer ${
+                isPhoneFrame
+                  ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[15px]">stay_current_portrait</span>
+              <span className="hidden sm:inline">9:16 Phone</span>
+            </button>
+          </div>
         </div>
 
         {/* Role & Screen Navigation Switcher - Segmented Control */}

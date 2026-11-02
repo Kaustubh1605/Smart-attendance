@@ -82,11 +82,19 @@ export const RegistrationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#e1e3e4] max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#031635]">Create an Account</h1>
-          <p className="text-[#75777f] text-sm mt-1">Smart Attendance Portal</p>
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative font-sans"
+      style={{
+        background: "linear-gradient(135deg, rgba(3, 22, 53, 0.92), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&auto=format&fit=crop&q=80') center/cover no-repeat fixed",
+      }}
+    >
+      <div className="bg-white/95 backdrop-blur-2xl p-7 sm:p-8 rounded-3xl shadow-2xl border border-white/40 max-w-md w-full relative z-10">
+        <div className="text-center mb-6">
+          <div className="inline-flex p-2 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 mb-2">
+            <span className="material-symbols-outlined text-[24px]">school</span>
+          </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Create an Account</h1>
+          <p className="text-slate-500 text-xs mt-1">Smart Attendance • Institutional Self-Registration</p>
         </div>
         
         {status === 'ERROR' && (

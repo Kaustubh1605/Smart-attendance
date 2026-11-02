@@ -10,6 +10,7 @@ import { VisualVerificationModal } from './VisualVerificationModal';
 import { HelpSupportModal } from './HelpSupportModal';
 import { TeacherOfflineAttendance } from './TeacherOfflineAttendance';
 import { TeacherStudyMaterials } from './TeacherStudyMaterials';
+import { TeacherStudentDailyAttendanceView } from './TeacherStudentDailyAttendanceView';
 import { generateDynamicQRChallenge } from '../services/qrVerificationService';
 import { AttendanceTrendsChart } from './AttendanceTrendsChart';
 
@@ -60,8 +61,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   onUpdateStudyMaterial,
   onDeleteStudyMaterial,
 }) => {
-  // Navigation View: 'live' | 'events' | 'materials' | 'offline' | 'analytics'
-  const [activeTab, setActiveTab] = useState<'live' | 'events' | 'materials' | 'offline' | 'analytics'>('live');
+  // Navigation View: 'live' | 'events' | 'materials' | 'offline' | 'analytics' | 'student-attendance'
+  const [activeTab, setActiveTab] = useState<'live' | 'events' | 'materials' | 'offline' | 'analytics' | 'student-attendance'>('live');
   const [isInternetOnline] = useState<boolean>(false);
   const [sessionActive, setSessionActive] = useState(true);
   const [showProjectorQR, setShowProjectorQR] = useState(false);
@@ -578,47 +579,65 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-3 sm:px-4 md:px-6 flex flex-col gap-5 md:gap-6 pt-4 md:pt-6">
-        {/* Navigation Tabs between Live Session, Event Hub, Study Materials & Offline Attendance */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 bg-[#f8f9fa] p-1.5 rounded-2xl border border-[#e1e3e4]">
+        {/* Navigation Tabs Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 bg-slate-100/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-inner">
           <button
             onClick={() => setActiveTab('live')}
-            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            className={`px-3 py-2.5 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-95 ${
               activeTab === 'live'
-                ? 'bg-[#031635] text-white shadow-xs'
-                : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
+                ? 'bg-slate-950 text-white shadow-xs font-black'
+                : 'text-slate-600 hover:bg-white hover:text-slate-900'
             }`}
           >
-            <span className="material-symbols-outlined text-[17px] shrink-0">radio_button_checked</span>
+            <span className="material-symbols-outlined text-[17px] shrink-0 text-emerald-400">radio_button_checked</span>
             <span className="truncate">
               Live: <strong className="font-extrabold">{currentLecture.code}</strong>
             </span>
-            {sessionActive && <span className="w-2 h-2 rounded-full bg-[#a0f399] animate-pulse shrink-0" />}
+            {sessionActive && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />}
           </button>
 
           <button
             onClick={() => setActiveTab('events')}
-            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            className={`px-3 py-2.5 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-95 ${
               activeTab === 'events'
-                ? 'bg-[#031635] text-white shadow-xs'
-                : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
+                ? 'bg-slate-950 text-white shadow-xs font-black'
+                : 'text-slate-600 hover:bg-white hover:text-slate-900'
             }`}
           >
-            <span className="material-symbols-outlined text-[17px] shrink-0">event_note</span>
-            <span className="truncate">Events & Lectures ({lectures.filter(l => !l.isArchived).length})</span>
+            <span className="material-symbols-outlined text-[17px] shrink-0 text-indigo-400">event_note</span>
+            <span className="truncate">Lectures ({lectures.filter(l => !l.isArchived).length})</span>
+          </button>
+
+          {/* Dedicated Tab: Student Daily Attendance Search */}
+          <button
+            onClick={() => setActiveTab('student-attendance')}
+            className={`px-3 py-2.5 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-95 ${
+              activeTab === 'student-attendance'
+                ? 'bg-slate-950 text-white shadow-xs font-black'
+                : 'text-slate-600 hover:bg-white hover:text-slate-900'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[17px] shrink-0 text-amber-500">person_search</span>
+            <span className="truncate">Student Daily Logs</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+              activeTab === 'student-attendance' ? 'bg-amber-400 text-slate-950' : 'bg-amber-100 text-amber-800'
+            }`}>
+              Search
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab('materials')}
-            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            className={`px-3 py-2.5 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-95 ${
               activeTab === 'materials'
-                ? 'bg-[#031635] text-white shadow-xs'
-                : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
+                ? 'bg-slate-950 text-white shadow-xs font-black'
+                : 'text-slate-600 hover:bg-white hover:text-slate-900'
             }`}
           >
-            <span className="material-symbols-outlined text-[17px] shrink-0">menu_book</span>
-            <span className="truncate">Study Materials</span>
+            <span className="material-symbols-outlined text-[17px] shrink-0 text-blue-400">menu_book</span>
+            <span className="truncate">Materials</span>
             <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'materials' ? 'bg-white/20 text-white' : 'bg-[#eef2ff] text-[#031635]'
+              activeTab === 'materials' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
             }`}>
               {studyMaterials.length}
             </span>
@@ -626,28 +645,25 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('offline')}
-            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            className={`px-3 py-2.5 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-95 ${
               activeTab === 'offline'
-                ? 'bg-[#031635] text-white shadow-xs'
-                : 'text-[#723600] bg-[#fffaf0] hover:bg-[#ffdcc6]/60 border border-[#ffdcc6]/60'
+                ? 'bg-slate-950 text-white shadow-xs font-black'
+                : 'text-amber-800 bg-amber-50/70 hover:bg-amber-100 border border-amber-200/60'
             }`}
           >
             <span className="material-symbols-outlined text-[17px] shrink-0">cloud_off</span>
-            <span className="truncate">Offline Mode</span>
-            <span className="bg-[#ffdcc6] text-[#723600] text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">
-              Local Mesh
-            </span>
+            <span className="truncate">Offline Mesh</span>
           </button>
 
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-2 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+            className={`px-3 py-2.5 rounded-xl text-[12px] md:text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-95 ${
               activeTab === 'analytics'
-                ? 'bg-[#031635] text-white shadow-xs'
-                : 'text-[#75777f] hover:bg-white hover:text-[#031635]'
+                ? 'bg-slate-950 text-white shadow-xs font-black'
+                : 'text-slate-600 hover:bg-white hover:text-slate-900'
             }`}
           >
-            <span className="material-symbols-outlined text-[17px] shrink-0">bar_chart</span>
+            <span className="material-symbols-outlined text-[17px] shrink-0 text-purple-400">bar_chart</span>
             <span className="truncate">Analytics</span>
           </button>
         </div>
@@ -1451,6 +1467,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               atRiskStudents={MOCK_AT_RISK_STUDENTS} 
             />
           </div>
+        )}
+
+        {/* TAB: SEARCH STUDENT & SUBJECT DAILY ATTENDANCE */}
+        {activeTab === 'student-attendance' && (
+          <TeacherStudentDailyAttendanceView onShowToast={showToast} />
         )}
       </main>
 

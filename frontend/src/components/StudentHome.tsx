@@ -26,6 +26,7 @@ interface StudentHomeProps {
   attendanceHistory?: AttendanceRecord[];
   onStartVerification: () => void;
   onNavigateHistory: () => void;
+  onNavigateSubjects?: () => void;
   onNavigateMaterials?: (subjectCode?: string) => void;
   onNavigateProfile: () => void;
   onRequestCorrection?: (record: AttendanceRecord) => void;
@@ -38,6 +39,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   attendanceHistory = [],
   onStartVerification,
   onNavigateHistory,
+  onNavigateSubjects,
   onNavigateMaterials,
   onNavigateProfile,
   onRequestCorrection,
@@ -258,6 +260,37 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Searchable Subject-Wise Monthly Attendance Quick Launcher */}
+        {onNavigateSubjects && (
+          <div 
+            onClick={onNavigateSubjects}
+            className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg flex items-center justify-between gap-3 cursor-pointer group hover:scale-[1.01] transition-all border border-indigo-500/20 active:scale-98"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 flex items-center justify-center shadow-inner group-hover:bg-indigo-500/30 transition-colors">
+                <span className="material-symbols-outlined text-[24px] text-indigo-300">analytics</span>
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-indigo-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                    Feature
+                  </span>
+                  <span className="text-[11px] font-bold text-indigo-200">Subject Intelligence</span>
+                </div>
+                <h3 className="text-[15px] font-extrabold text-white tracking-tight mt-0.5">
+                  Search Subject Attendance by Month
+                </h3>
+                <p className="text-[11px] text-indigo-200/70">
+                  Instant search • Present & absent lecture counts per month
+                </p>
+              </div>
+            </div>
+            <div className="w-9 h-9 rounded-2xl bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white transition-all shrink-0">
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </div>
+          </div>
+        )}
 
         {/* Course / Subject Breakdown Section */}
         <div className="flex flex-col gap-2.5">

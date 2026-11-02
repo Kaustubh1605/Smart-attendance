@@ -6,6 +6,7 @@ import { StudentHome } from '../components/StudentHome';
 import { StudentHistory } from '../components/StudentHistory';
 import { StudentStudyMaterials } from '../components/StudentStudyMaterials';
 import { StudentProfileView } from '../components/StudentProfile';
+import { StudentSubjectAttendanceView } from '../components/StudentSubjectAttendanceView';
 import { BottomNav } from '../components/BottomNav';
 import { CorrectionModal } from '../components/CorrectionModal';
 import { DeviceRecoveryModal } from '../components/DeviceRecoveryModal';
@@ -17,7 +18,8 @@ export const StudentPortal = (props: any) => {
   const [showPhonePeScanner, setShowPhonePeScanner] = useState(false);
 
   // Map paths to tabs for BottomNav
-  const currentTab = location.pathname.includes('history') ? 'history' : 
+  const currentTab = location.pathname.includes('subjects') ? 'subjects' :
+                     location.pathname.includes('history') ? 'history' : 
                      location.pathname.includes('materials') ? 'materials' : 
                      location.pathname.includes('profile') ? 'profile' : 'home';
 
@@ -64,12 +66,26 @@ export const StudentPortal = (props: any) => {
                 attendanceHistory={props.attendanceHistory}
                 onStartVerification={() => setShowPhonePeScanner(true)}
                 onNavigateHistory={() => handleSelectTab('history')}
+                onNavigateSubjects={() => handleSelectTab('subjects')}
                 onNavigateMaterials={(subjectCode?: string) => {
                   props.setSelectedMaterialSubject(subjectCode || null);
                   handleSelectTab('materials');
                 }}
                 onNavigateProfile={() => handleSelectTab('profile')}
                 onRequestCorrection={(rec: any) => props.setCorrectionTargetRecord(rec)}
+              />
+            } />
+            <Route path="subjects" element={
+              <StudentSubjectAttendanceView
+                student={props.studentData}
+                subjects={props.subjects}
+                attendanceHistory={props.attendanceHistory}
+                onRequestCorrection={(rec: any) => props.setCorrectionTargetRecord(rec)}
+                onNavigateHome={() => handleSelectTab('home')}
+                onNavigateMaterials={(subjectCode?: string) => {
+                  props.setSelectedMaterialSubject(subjectCode || null);
+                  handleSelectTab('materials');
+                }}
               />
             } />
             <Route path="history" element={

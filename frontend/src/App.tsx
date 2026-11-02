@@ -883,6 +883,7 @@ export default function App() {
           } />
           <Route path="/teacher/*" element={
             <TeacherPortal
+              isPhoneFrame={isPhoneFrame}
               isTeacherLoggedIn={isTeacherLoggedIn}
               setIsTeacherLoggedIn={setIsTeacherLoggedIn}
               onLoginSuccess={handleTeacherLoginSuccess}
@@ -903,6 +904,7 @@ export default function App() {
           } />
           <Route path="/admin/*" element={
             <AdminPortalPage
+              isPhoneFrame={isPhoneFrame}
               isAdminLoggedIn={isAdminLoggedIn}
               setIsAdminLoggedIn={setIsAdminLoggedIn}
               onLoginSuccess={handleAdminLoginSuccess}
