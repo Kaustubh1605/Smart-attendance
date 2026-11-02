@@ -122,6 +122,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   // Manual User Addition Modal State
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [enrollmentMode, setEnrollmentMode] = useState<'DIRECT' | 'PENDING'>('DIRECT');
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [newUserRole, setNewUserRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -274,8 +276,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     showToast('Faculty status updated');
   };
 
-  const handleOpenAddUserModal = (defaultRole: 'STUDENT' | 'TEACHER' = 'STUDENT') => {
+  const handleOpenAddUserModal = (
+    defaultRole: 'STUDENT' | 'TEACHER' = 'STUDENT',
+    defaultMode: 'DIRECT' | 'PENDING' = 'DIRECT'
+  ) => {
     setNewUserRole(defaultRole);
+    setEnrollmentMode(defaultMode);
     setNewUserName('');
     setNewUserEmail('');
     setNewUserPassword(defaultRole === 'STUDENT' ? 'StudentKey2024#' : 'FacultyPass2024!');
@@ -338,67 +344,106 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       backendSyncOk = false;
     }
 
-    if (newUserRole === 'STUDENT') {
-      const studentId = newUserStudentId.trim() || `STU-2024-${Math.floor(1000 + Math.random() * 9000)}`;
-      const rollNo = newUserRollNo.trim() || `BCA-${Math.floor(10 + Math.random() * 90)}`;
-      const newStudent: AdminStudent = {
-        id: `ast-${Date.now()}`,
-        studentId,
+    if (enrollmentMode === 'PENDING') {
+      // Add to pending approvals queue so admin can review/approve on the Registrations tab
+      const newPending = {
+        id: `reg-${Date.now()}`,
         name: newUserName.trim(),
         email: newUserEmail.trim().toLowerCase(),
-        program: newUserProgram.trim() || 'BCA (3rd Sem)',
-        batch: newUserBatch.trim() || '2024-2027',
-        rollNo,
-        className: newUserClassName.trim() || 'BCA Sem 3 - Div A',
-        deviceStatus: 'bound',
-        registeredDeviceModel: 'Standard Verified Hardware',
-        accountStatus: 'active',
-        attendancePercentage: 100,
+        role: newUserRole,
+        status: 'PENDING' as const,
+        createdAt: new Date().toISOString(),
       };
 
-      setStudents((prev) => [newStudent, ...prev]);
+      setPendingUsers((prev) => [newPending, ...prev]);
+      setActiveTab('registrations');
+      setHighlightedId(newPending.id);
+      setTimeout(() => setHighlightedId(null), 6000);
+
       onAddAuditLog({
         id: generateUniqueId('aud'),
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
         actor: 'admin@springfield.edu',
         role: 'ADMIN',
-        action: 'MANUAL_STUDENT_ENROLL',
-        entity: 'StudentProfile',
-        entityId: newStudent.studentId,
-        newState: `Manually enrolled Student ${newStudent.name} (${newStudent.studentId}) in ${newStudent.className}${backendSyncOk ? ' [Backend Synced]' : ''}`,
+        action: 'MANUAL_PENDING_REGISTRATION',
+        entity: 'PendingRegistration',
+        entityId: newPending.id,
+        newState: `Candidate ${newPending.name} (${newPending.email}) queued for verification by administrator${backendSyncOk ? ' [Backend Synced]' : ''}`,
         ipAddress: '192.168.1.10',
       });
-      showToast(`Student ${newStudent.name} successfully created & enrolled!`);
+      showToast(`${newUserRole === 'STUDENT' ? 'Student' : 'Faculty'} candidate queued in Registrations tab for approval!`);
     } else {
-      const teacherId = newUserTeacherId.trim() || `TCH-${Math.floor(1000 + Math.random() * 9000)}`;
-      const assigned = newUserAssignedClasses
-        .split(',')
-        .map((c) => c.trim())
-        .filter(Boolean);
+      // DIRECT ACTIVE ENROLLMENT: Instantly add to directory and navigate view
+      if (newUserRole === 'STUDENT') {
+        const studentId = newUserStudentId.trim() || `STU-2024-${Math.floor(1000 + Math.random() * 9000)}`;
+        const rollNo = newUserRollNo.trim() || `BCA-${Math.floor(10 + Math.random() * 90)}`;
+        const newStudent: AdminStudent = {
+          id: `ast-${Date.now()}`,
+          studentId,
+          name: newUserName.trim(),
+          email: newUserEmail.trim().toLowerCase(),
+          program: newUserProgram.trim() || 'BCA (3rd Sem)',
+          batch: newUserBatch.trim() || '2024-2027',
+          rollNo,
+          className: newUserClassName.trim() || 'BCA Sem 3 - Div A',
+          deviceStatus: 'bound',
+          registeredDeviceModel: 'Standard Verified Hardware',
+          accountStatus: 'active',
+          attendancePercentage: 100,
+        };
 
-      const newTeacher: AdminTeacher = {
-        id: `tch-${Date.now()}`,
-        teacherId,
-        name: newUserName.trim(),
-        email: newUserEmail.trim().toLowerCase(),
-        department: newUserDepartment.trim() || 'Computer Science',
-        assignedClasses: assigned.length > 0 ? assigned : ['BCA Sem 3 - Div A'],
-        accountStatus: 'active',
-      };
+        setStudents((prev) => [newStudent, ...prev]);
+        setActiveTab('students');
+        setHighlightedId(newStudent.id);
+        setTimeout(() => setHighlightedId(null), 6000);
 
-      setTeachers((prev) => [newTeacher, ...prev]);
-      onAddAuditLog({
-        id: generateUniqueId('aud'),
-        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
-        actor: 'admin@springfield.edu',
-        role: 'ADMIN',
-        action: 'MANUAL_FACULTY_ENROLL',
-        entity: 'TeacherProfile',
-        entityId: newTeacher.teacherId,
-        newState: `Manually appointed Faculty ${newTeacher.name} to ${newTeacher.department}${backendSyncOk ? ' [Backend Synced]' : ''}`,
-        ipAddress: '192.168.1.10',
-      });
-      showToast(`Faculty ${newTeacher.name} successfully added!`);
+        onAddAuditLog({
+          id: generateUniqueId('aud'),
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+          actor: 'admin@springfield.edu',
+          role: 'ADMIN',
+          action: 'MANUAL_STUDENT_ENROLL',
+          entity: 'StudentProfile',
+          entityId: newStudent.studentId,
+          newState: `Directly enrolled Student ${newStudent.name} (${newStudent.studentId}) in ${newStudent.className}${backendSyncOk ? ' [Backend Synced]' : ''}`,
+          ipAddress: '192.168.1.10',
+        });
+        showToast(`Student ${newStudent.name} directly enrolled and activated!`);
+      } else {
+        const teacherId = newUserTeacherId.trim() || `TCH-${Math.floor(1000 + Math.random() * 9000)}`;
+        const assigned = newUserAssignedClasses
+          .split(',')
+          .map((c) => c.trim())
+          .filter(Boolean);
+
+        const newTeacher: AdminTeacher = {
+          id: `tch-${Date.now()}`,
+          teacherId,
+          name: newUserName.trim(),
+          email: newUserEmail.trim().toLowerCase(),
+          department: newUserDepartment.trim() || 'Computer Science',
+          assignedClasses: assigned.length > 0 ? assigned : ['BCA Sem 3 - Div A'],
+          accountStatus: 'active',
+        };
+
+        setTeachers((prev) => [newTeacher, ...prev]);
+        setActiveTab('teachers');
+        setHighlightedId(newTeacher.id);
+        setTimeout(() => setHighlightedId(null), 6000);
+
+        onAddAuditLog({
+          id: generateUniqueId('aud'),
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+          actor: 'admin@springfield.edu',
+          role: 'ADMIN',
+          action: 'MANUAL_FACULTY_ENROLL',
+          entity: 'TeacherProfile',
+          entityId: newTeacher.teacherId,
+          newState: `Directly appointed Faculty ${newTeacher.name} to ${newTeacher.department}${backendSyncOk ? ' [Backend Synced]' : ''}`,
+          ipAddress: '192.168.1.10',
+        });
+        showToast(`Faculty ${newTeacher.name} directly enrolled and activated!`);
+      }
     }
 
     setIsSubmittingUser(false);
@@ -1033,13 +1078,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </p>
                 </div>
 
-                <button 
-                  onClick={() => handleOpenAddUserModal('STUDENT')}
-                  className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-[13px] font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shrink-0"
-                >
-                  <span className="material-symbols-outlined text-[18px]">person_add</span>
-                  <span>Directly Add User</span>
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button 
+                    onClick={() => handleOpenAddUserModal('STUDENT', 'PENDING')}
+                    className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-[12px] font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    title="Add applicant to this pending approval queue"
+                  >
+                    <span className="material-symbols-outlined text-[17px] text-amber-600">queue</span>
+                    <span>Add to Pending Queue</span>
+                  </button>
+
+                  <button 
+                    onClick={() => handleOpenAddUserModal('STUDENT', 'DIRECT')}
+                    className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-[12px] font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shrink-0"
+                    title="Directly activate and enroll candidate into institution directory"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">person_add</span>
+                    <span>Directly Enroll User</span>
+                  </button>
+                </div>
               </div>
 
               {pendingUsers.length === 0 ? (
@@ -1048,16 +1105,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     <span className="material-symbols-outlined text-[32px]">task_alt</span>
                   </div>
                   <h3 className="text-[16px] font-bold text-slate-800">Queue is Clear!</h3>
-                  <p className="text-[13px] text-slate-500 max-w-sm mt-1 mb-4">
+                  <p className="text-[13px] text-slate-500 max-w-sm mt-1 mb-5">
                     All student and teacher account registration requests have been approved or processed.
                   </p>
-                  <button
-                    onClick={() => handleOpenAddUserModal('STUDENT')}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">add</span>
-                    <span>Manually Add New User</span>
-                  </button>
+                  <div className="flex items-center gap-3 flex-wrap justify-center">
+                    <button
+                      onClick={() => handleOpenAddUserModal('STUDENT', 'PENDING')}
+                      className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-amber-600">queue</span>
+                      <span>Queue Candidate for Review</span>
+                    </button>
+                    <button
+                      onClick={() => handleOpenAddUserModal('STUDENT', 'DIRECT')}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">bolt</span>
+                      <span>Directly Enroll Active User</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -1073,13 +1139,25 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {pendingUsers.map(user => (
-                        <tr key={user.id} className="hover:bg-slate-50/70 transition-colors group">
+                        <tr 
+                          key={user.id} 
+                          className={`hover:bg-slate-50/70 transition-all group ${
+                            highlightedId === user.id ? 'bg-amber-50/80 ring-2 ring-amber-400' : ''
+                          }`}
+                        >
                           <td className="py-4 px-5">
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-slate-200 to-slate-100 border border-slate-300/80 flex items-center justify-center font-bold text-slate-700 text-xs shadow-xs">
                                 {user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                               </div>
-                              <span className="font-bold text-slate-900">{user.name}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">{user.name}</span>
+                                {highlightedId === user.id && (
+                                  <span className="bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase">
+                                    Just Queued
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="py-4 px-5 text-slate-600 font-mono text-[12px]">{user.email}</td>
@@ -1126,6 +1204,101 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   </table>
                 </div>
               )}
+            </div>
+
+            {/* Enrolled & Active Records Roster (Live Feed) */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
+              <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[18px]">verified_user</span>
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-slate-900">Enrolled & Active User Roster</h3>
+                    <p className="text-[11px] text-slate-500">
+                      Recently approved and directly enrolled institutional members ({students.length} students, {teachers.length} faculty)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('students')}
+                    className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  >
+                    View All Students ({students.length}) →
+                  </button>
+                  <span className="text-slate-300">•</span>
+                  <button
+                    onClick={() => setActiveTab('teachers')}
+                    className="text-[11px] font-bold text-purple-600 hover:text-purple-800 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  >
+                    View All Faculty ({teachers.length}) →
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-[12px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/40 border-b border-slate-100 text-slate-400 font-bold uppercase text-[9px] tracking-wider">
+                      <th className="py-2.5 px-5">Member Name</th>
+                      <th className="py-2.5 px-5">Institutional ID</th>
+                      <th className="py-2.5 px-5">Role</th>
+                      <th className="py-2.5 px-5">Academic / Dept Unit</th>
+                      <th className="py-2.5 px-5">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {students.slice(0, 4).map(s => (
+                      <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-5 font-bold text-slate-900 flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-extrabold flex items-center justify-center">
+                            {s.name.charAt(0)}
+                          </span>
+                          <span>{s.name}</span>
+                        </td>
+                        <td className="py-3 px-5 font-mono text-slate-600">{s.studentId}</td>
+                        <td className="py-3 px-5">
+                          <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200">
+                            Student
+                          </span>
+                        </td>
+                        <td className="py-3 px-5 text-slate-600">{s.className || s.program}</td>
+                        <td className="py-3 px-5">
+                          <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Active Enrolled
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {teachers.slice(0, 3).map(t => (
+                      <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-5 font-bold text-slate-900 flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-[10px] font-extrabold flex items-center justify-center">
+                            {t.name.charAt(0)}
+                          </span>
+                          <span>{t.name}</span>
+                        </td>
+                        <td className="py-3 px-5 font-mono text-slate-600">{t.teacherId}</td>
+                        <td className="py-3 px-5">
+                          <span className="bg-purple-50 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-200">
+                            Faculty
+                          </span>
+                        </td>
+                        <td className="py-3 px-5 text-slate-600">{t.department}</td>
+                        <td className="py-3 px-5">
+                          <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Active Enrolled
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1199,7 +1372,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredStudents.map((st) => (
-                    <tr key={st.id} className="hover:bg-slate-50/70 transition-colors group">
+                    <tr 
+                      key={st.id} 
+                      className={`hover:bg-slate-50/70 transition-all group ${
+                        highlightedId === st.id ? 'bg-emerald-50/80 ring-2 ring-emerald-400' : ''
+                      }`}
+                    >
                       <td className="py-3.5 px-5 font-mono">
                         <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 text-[11px]">
                           {st.studentId}
@@ -1373,7 +1551,12 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredTeachers.map((tch) => (
-                    <tr key={tch.id} className="hover:bg-slate-50/70 transition-colors group">
+                    <tr 
+                      key={tch.id} 
+                      className={`hover:bg-slate-50/70 transition-all group ${
+                        highlightedId === tch.id ? 'bg-purple-50/80 ring-2 ring-purple-400' : ''
+                      }`}
+                    >
                       <td className="py-3.5 px-5 font-mono">
                         <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 text-[11px]">
                           {tch.teacherId}
@@ -1447,37 +1630,48 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             {MOCK_SUBJECTS.map((sub) => (
               <div
                 key={sub.id}
-                className="bg-white rounded-3xl p-5 border border-[#e1e3e4] shadow-xs flex flex-col justify-between gap-4"
+                className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between gap-5 group"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-mono font-bold bg-[#f8f9fa] text-[#031635] px-2 py-0.5 rounded-md border border-[#e1e3e4] w-fit">
+                    <span className="text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-lg border border-indigo-200/60 w-fit">
                       {sub.code}
                     </span>
-                    <h3 className="text-[16px] font-bold text-[#031635] mt-1">{sub.name}</h3>
-                    <p className="text-[12px] text-[#75777f]">{sub.instructor} • BCA Sem 3</p>
+                    <h3 className="text-[17px] font-extrabold text-slate-900 mt-2 tracking-tight group-hover:text-indigo-600 transition-colors">
+                      {sub.name}
+                    </h3>
+                    <p className="text-[12px] text-slate-500 font-medium">{sub.instructor} • BCA Sem 3</p>
                   </div>
-                  <span className="bg-[#eef2ff] text-[#031635] text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-slate-200">
                     60 Enrolled
                   </span>
                 </div>
 
-                <div className="bg-[#f8f9fa] rounded-2xl p-3 flex flex-col gap-1.5 text-[12px]">
-                  <div className="flex justify-between">
-                    <span className="text-[#75777f]">Attendance Rate:</span>
-                    <span className="font-bold text-[#031635]">{sub.percentage}%</span>
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col gap-2.5 text-[12px]">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 font-medium">Cohort Attendance Rate:</span>
+                    <span className="font-extrabold text-slate-900">{sub.percentage}%</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#75777f]">Lectures Held:</span>
-                    <span className="font-medium text-[#191c1d]">{sub.totalLectures} Classes</span>
+                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        sub.percentage >= 80 ? 'bg-emerald-500' : sub.percentage >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+                      }`}
+                      style={{ width: `${sub.percentage}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-slate-500 pt-1">
+                    <span>Delivered Classes:</span>
+                    <span className="font-bold text-slate-700">{sub.totalLectures} Classes</span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => showToast(`Course settings opened for ${sub.code}`)}
-                  className="w-full py-2 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl text-[12px] font-bold transition-all cursor-pointer shadow-xs"
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[12px] font-bold transition-all cursor-pointer shadow-xs active:scale-98 flex items-center justify-center gap-1.5"
                 >
-                  Manage Syllabus & Batches
+                  <span className="material-symbols-outlined text-[16px]">tune</span>
+                  <span>Manage Syllabus & Batches</span>
                 </button>
               </div>
             ))}
@@ -1492,84 +1686,87 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             {classrooms.map((room) => (
               <div
                 key={room.id}
-                className="bg-white rounded-3xl p-5 border border-[#e1e3e4] shadow-xs flex flex-col justify-between gap-4"
+                className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-300 transition-all flex flex-col justify-between gap-5 group"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase text-[#75777f]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       {room.building}
                     </span>
-                    <h3 className="text-[18px] font-bold text-[#031635] mt-0.5">{room.roomNumber}</h3>
-                    <p className="text-[12px] text-[#44474e]">{room.name} (Cap: {room.capacity})</p>
+                    <h3 className="text-[19px] font-extrabold text-slate-900 mt-0.5 tracking-tight group-hover:text-blue-600 transition-colors">
+                      {room.roomNumber}
+                    </h3>
+                    <p className="text-[12px] text-slate-500 font-medium">{room.name} (Capacity: {room.capacity})</p>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="bg-[#a0f399] text-[#005312] text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full">
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Calibrated
                     </span>
-                    <span className="bg-[#eef2ff] text-[#031635] text-[9px] font-bold px-2 py-0.5 rounded-full border border-[#d8e2ff]">
-                      Offline: {room.offlineAttendanceEnabled !== false ? '🟢 Enabled' : '🔴 Disabled'}
+                    <span className="bg-slate-100 text-slate-700 text-[9px] font-bold px-2 py-0.5 rounded-full border border-slate-200">
+                      Offline: {room.offlineAttendanceEnabled !== false ? '🟢 Ready' : '🔴 Disabled'}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-[#f8f9fa] rounded-2xl p-3.5 flex flex-col gap-2 text-[12px]">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex flex-col gap-2.5 text-[12px]">
                   <div className="flex justify-between items-center">
-                    <span className="text-[#75777f]">Location:</span>
-                    <span className="font-bold text-[#005312] flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">check_circle</span> Configured
+                    <span className="text-slate-500 font-medium">Hardware Location:</span>
+                    <span className="font-bold text-emerald-700 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[15px]">check_circle</span> Configured
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[#75777f]">Geofence Perimeter:</span>
-                    <span className="font-bold text-[#031635] flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-[#005312]">check_circle</span> Configured ({room.radiusMeters}m)
+                    <span className="text-slate-500 font-medium">Geofence Radius:</span>
+                    <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200/80">
+                      {room.radiusMeters} meters
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[#75777f]">BLE Beacon:</span>
-                    <span className="font-mono text-[11px] text-[#031635] bg-white px-2 py-0.5 rounded border border-[#e1e3e4] flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#005312] animate-pulse" />
-                      Active ({room.bleBeaconId})
+                    <span className="text-slate-500 font-medium">BLE Beacon ID:</span>
+                    <span className="font-mono text-[11px] text-slate-800 bg-white px-2 py-0.5 rounded-md border border-slate-200/80 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      {room.bleBeaconId}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[#75777f]">Classroom Mesh SSID:</span>
-                    <span className="font-mono text-[11px] text-[#723600] bg-[#fffaf0] px-2 py-0.5 rounded border border-[#ffdcc6]">
+                    <span className="text-slate-500 font-medium">Classroom Mesh SSID:</span>
+                    <span className="font-mono text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                       {room.localNetworkSsid || `SmartAttend-${room.roomNumber.replace(/\s+/g, '')}`}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[#75777f]">Local IP Subnet:</span>
-                    <span className="font-mono text-[11px] text-[#44474e]">
+                    <span className="text-slate-500 font-medium">Local Gateway Subnet:</span>
+                    <span className="font-mono text-[11px] text-slate-600">
                       {room.localNetworkIp || '192.168.4.1:8080'}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     onClick={() => showToast(`Opening configuration for ${room.roomNumber}`)}
-                    className="py-1.5 px-2 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
+                    className="py-2 px-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
                   >
                     Configure
                   </button>
                   <button
                     onClick={() => showToast(`Testing BLE Beacon in ${room.roomNumber}: 🟢 RSSI -58 dBm (Strong)`)}
-                    className="py-1.5 px-2 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
+                    className="py-2 px-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
                   >
                     Test BLE
                   </button>
                   <button
                     onClick={() => showToast(`GPS validation passed for ${room.roomNumber} (lat: ${room.lat})`)}
-                    className="py-1.5 px-2 bg-[#f8f9fa] hover:bg-[#eef2ff] text-[#031635] border border-[#e1e3e4] rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
+                    className="py-2 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
                   >
                     Test GPS
                   </button>
                   <button
                     onClick={() => showToast(`Offline readiness test PASSED for ${room.roomNumber}. Keypair & SSID ready.`)}
-                    className="py-1.5 px-2 bg-[#fffaf0] hover:bg-[#ffdcc6] text-[#723600] border border-[#ffdcc6] rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
+                    className="py-2 px-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-[11px] font-bold transition-all cursor-pointer shadow-xs text-center"
                   >
-                    Test Offline
+                    Test Mesh
                   </button>
                 </div>
               </div>
@@ -2425,10 +2622,48 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
             {/* Modal Body / Form */}
             <form onSubmit={handleCreateUser} className="p-6 overflow-y-auto flex flex-col gap-4 text-[12px]">
+              {/* Enrollment Workflow Mode */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1.5 uppercase text-[10px] tracking-wider">
+                  Enrollment Workflow Mode
+                </label>
+                <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => setEnrollmentMode('DIRECT')}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                      enrollmentMode === 'DIRECT'
+                        ? 'bg-white text-emerald-700 shadow-sm border border-emerald-200 font-extrabold ring-1 ring-emerald-500/20'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-emerald-600">bolt</span>
+                    <span>Direct Active Enrollment</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEnrollmentMode('PENDING')}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
+                      enrollmentMode === 'PENDING'
+                        ? 'bg-white text-amber-700 shadow-sm border border-amber-200 font-extrabold ring-1 ring-amber-500/20'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px] text-amber-600">hourglass_top</span>
+                    <span>Add to Pending Queue</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  {enrollmentMode === 'DIRECT'
+                    ? '⚡ Instantly provisions active record and displays in institutional directory.'
+                    : '📋 Places candidate into Pending Registrations table for administrative sign-off.'}
+                </p>
+              </div>
+
               {/* Role Selector Tabs */}
               <div>
-                <label className="block font-bold text-slate-600 mb-2 uppercase text-[10px] tracking-wider">
-                  Select Account Provisioning Type
+                <label className="block font-bold text-slate-700 mb-1.5 uppercase text-[10px] tracking-wider">
+                  Select Candidate Role
                 </label>
                 <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 shadow-inner">
                   <button
@@ -2441,7 +2676,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">school</span>
-                    <span>Student Account</span>
+                    <span>Student Candidate</span>
                   </button>
                   <button
                     type="button"
@@ -2675,12 +2910,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                   {isSubmittingUser ? (
                     <>
                       <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                      <span>Enrolling User...</span>
+                      <span>Processing Enrollment...</span>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
-                      <span>Create & Enroll {newUserRole === 'STUDENT' ? 'Student' : 'Faculty'}</span>
+                      <span className="material-symbols-outlined text-[16px]">
+                        {enrollmentMode === 'DIRECT' ? 'how_to_reg' : 'queue'}
+                      </span>
+                      <span>
+                        {enrollmentMode === 'DIRECT'
+                          ? `Directly Enroll & Activate ${newUserRole === 'STUDENT' ? 'Student' : 'Faculty'}`
+                          : `Queue ${newUserRole === 'STUDENT' ? 'Student' : 'Faculty'} for Approval`}
+                      </span>
                     </>
                   )}
                 </button>
