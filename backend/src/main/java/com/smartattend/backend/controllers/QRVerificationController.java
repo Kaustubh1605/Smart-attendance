@@ -7,6 +7,9 @@ import com.smartattend.backend.services.QRVerificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/qr")
 public class QRVerificationController {
@@ -24,6 +27,19 @@ public class QRVerificationController {
         return ResponseEntity.ok(qrVerificationService.generateDynamicQRChallenge(sessionId, lectureCode));
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<Map<String, String>> getActiveSession() {
+        return ResponseEntity.ok(qrVerificationService.getActiveSession());
+    }
+
+    @PostMapping("/active")
+    public ResponseEntity<Map<String, String>> setActiveSession(
+            @RequestParam String sessionId,
+            @RequestParam String lectureCode) {
+        qrVerificationService.setActiveSession(sessionId, lectureCode);
+        return ResponseEntity.ok(qrVerificationService.getActiveSession());
+    }
+
     @PostMapping("/validate")
     public ResponseEntity<QRVerificationResult> validateAttempt(@RequestBody QRVerificationAttempt attempt) {
         QRVerificationResult result = qrVerificationService.validateAttendanceAttempt(attempt);
@@ -31,7 +47,7 @@ public class QRVerificationController {
     }
 
     @GetMapping("/attendees/{sessionId}")
-    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> getSessionAttendees(@PathVariable String sessionId) {
+    public ResponseEntity<List<Map<String, Object>>> getSessionAttendees(@PathVariable String sessionId) {
         return ResponseEntity.ok(qrVerificationService.getSessionAttendees(sessionId));
     }
 }

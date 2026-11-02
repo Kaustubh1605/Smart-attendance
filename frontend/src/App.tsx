@@ -292,12 +292,76 @@ export default function App() {
     };
   }, [activeLectureId]);
 
+  // Sync active lecture with backend so any new lecture started by teacher instantly shows on student account
+  useEffect(() => {
+    let isMounted = true;
+    const syncActiveLectureFromBackend = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/lectures/active`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isMounted || !data || !data.sessionId) return;
+
+        if (data.sessionId && data.sessionId !== activeLectureId) {
+          setActiveLectureId(data.sessionId);
+          setLectures((prev) => {
+            const exists = prev.find((l) => l.id === data.sessionId);
+            if (exists) {
+              return prev.map((l) => (l.id === data.sessionId ? { ...l, status: 'active' } : l));
+            }
+            const newLec: Lecture = {
+              id: data.sessionId,
+              name: data.lectureName || `${data.lectureCode} Lecture`,
+              code: data.lectureCode || 'LEC-101',
+              className: 'BCA-A',
+              instructor: data.instructor || 'Prof. Sharma',
+              room: data.room || 'Room 204',
+              timeSlot: data.timeSlot || 'Live Session',
+              duration: data.duration || '60m',
+              status: 'active',
+              attendanceCount: 0,
+              geofence: { lat: 19.9975, lng: 73.7898, radiusMeters: 35 },
+              bleBeaconId: 'BEACON-HALL-LIVE',
+            };
+            return [newLec, ...prev];
+          });
+        }
+      } catch (e) {
+        // ignore network error
+      }
+    };
+
+    syncActiveLectureFromBackend();
+    const interval = setInterval(syncActiveLectureFromBackend, 2500);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [activeLectureId]);
+
   const activeLecture = lectures.find((l) => l.id === activeLectureId) || lectures[0];
   const currentLectureStudents = lectureAttendanceMap[activeLectureId] || [];
   const upcomingLectures = lectures.filter((l) => l.id !== activeLecture.id);
 
   const handleSelectLecture = (lecture: Lecture) => {
     setActiveLectureId(lecture.id);
+
+    // Notify backend so all student devices sync instantly
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/lectures/active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: lecture.id,
+        lectureCode: lecture.code,
+        lectureName: lecture.name,
+        room: lecture.room,
+        instructor: lecture.instructor,
+        timeSlot: lecture.timeSlot,
+        duration: lecture.duration,
+        status: 'active',
+      }),
+    }).catch(() => {});
+
     try {
       const channel = new BroadcastChannel('smartattend_channel');
       channel.postMessage({ type: 'ACTIVE_LECTURE_CHANGED', lectureId: lecture.id });
@@ -326,6 +390,23 @@ export default function App() {
     }));
     setLectures((prev) => [{ ...newLecture, attendanceCount: 0 }, ...prev]);
     setActiveLectureId(newLecture.id);
+
+    // Broadcast to backend so student portal sees this new lecture immediately
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/lectures/active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: newLecture.id,
+        lectureCode: newLecture.code,
+        lectureName: newLecture.name,
+        room: newLecture.room,
+        instructor: newLecture.instructor,
+        timeSlot: newLecture.timeSlot,
+        duration: newLecture.duration,
+        status: 'active',
+      }),
+    }).catch(() => {});
+
     try {
       const channel = new BroadcastChannel('smartattend_channel');
       channel.postMessage({ type: 'LECTURE_CREATED', newLecture });
@@ -784,6 +865,7 @@ export default function App() {
               studentData={studentData}
               activeLecture={activeLecture}
               upcomingLectures={upcomingLectures}
+              lectures={lectures}
               attendanceHistory={attendanceHistory}
               studyMaterials={studyMaterials}
               selectedMaterialSubject={selectedMaterialSubject}

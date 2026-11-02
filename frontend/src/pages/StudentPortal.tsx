@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { StudentLogin } from '../components/StudentLogin';
 import { StudentVerification } from '../components/StudentVerification';
@@ -9,10 +9,12 @@ import { StudentProfileView } from '../components/StudentProfile';
 import { BottomNav } from '../components/BottomNav';
 import { CorrectionModal } from '../components/CorrectionModal';
 import { DeviceRecoveryModal } from '../components/DeviceRecoveryModal';
+import { SmartAttendanceScannerModal } from '../components/SmartAttendanceScannerModal';
 
 export const StudentPortal = (props: any) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showPhonePeScanner, setShowPhonePeScanner] = useState(false);
 
   // Map paths to tabs for BottomNav
   const currentTab = location.pathname.includes('history') ? 'history' : 
@@ -60,7 +62,7 @@ export const StudentPortal = (props: any) => {
                 activeLecture={props.activeLecture}
                 upcomingLectures={props.upcomingLectures}
                 attendanceHistory={props.attendanceHistory}
-                onStartVerification={() => props.setIsVerifying(true)}
+                onStartVerification={() => setShowPhonePeScanner(true)}
                 onNavigateHistory={() => handleSelectTab('history')}
                 onNavigateMaterials={(subjectCode?: string) => {
                   props.setSelectedMaterialSubject(subjectCode || null);
@@ -100,9 +102,28 @@ export const StudentPortal = (props: any) => {
             <Route path="*" element={<Navigate to="/student" />} />
           </Routes>
 
-          <BottomNav currentTab={currentTab as any} onSelectTab={handleSelectTab} />
+          {/* BottomNav with dedicated PhonePe-style QR Scanner trigger */}
+          <BottomNav
+            currentTab={currentTab as any}
+            onSelectTab={handleSelectTab}
+            onOpenScanner={() => setShowPhonePeScanner(true)}
+          />
         </>
       )}
+
+      {/* PhonePe-Style Dedicated Attendance QR Scanner Modal */}
+      <SmartAttendanceScannerModal
+        isOpen={showPhonePeScanner}
+        onClose={() => setShowPhonePeScanner(false)}
+        student={props.studentData}
+        activeLecture={props.activeLecture}
+        allLectures={props.lectures || [props.activeLecture, ...(props.upcomingLectures || [])]}
+        onAttendanceMarked={(lecture, result) => {
+          if (props.handleVerificationComplete) {
+            props.handleVerificationComplete(lecture, result);
+          }
+        }}
+      />
 
       {props.correctionTargetRecord && (
         <CorrectionModal

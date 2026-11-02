@@ -27,9 +27,23 @@ public class QRVerificationService {
     private final Set<String> submittedChallengeAttempts = new HashSet<>();
     private final Set<String> submittedSessionAttendance = new HashSet<>();
     private final Map<String, List<Map<String, Object>>> sessionAttendees = new ConcurrentHashMap<>();
+    private volatile String activeSessionId = "lec-1";
+    private volatile String activeLectureCode = "CS301";
 
     public List<Map<String, Object>> getSessionAttendees(String sessionId) {
         return sessionAttendees.getOrDefault(sessionId, Collections.emptyList());
+    }
+
+    public Map<String, String> getActiveSession() {
+        Map<String, String> session = new HashMap<>();
+        session.put("sessionId", activeSessionId);
+        session.put("lectureCode", activeLectureCode);
+        return session;
+    }
+
+    public void setActiveSession(String sessionId, String lectureCode) {
+        this.activeSessionId = sessionId;
+        this.activeLectureCode = lectureCode;
     }
     
     private String createSignature(String payload) {
@@ -51,6 +65,8 @@ public class QRVerificationService {
     }
     
     public DynamicQRChallenge generateDynamicQRChallenge(String sessionId, String lectureCode) {
+        this.activeSessionId = sessionId;
+        this.activeLectureCode = lectureCode;
         long createdAt = System.currentTimeMillis();
         long expiresAt = createdAt + QR_ROTATION_INTERVAL_MS;
         int nonce = 1000 + (int)(Math.random() * 9000);

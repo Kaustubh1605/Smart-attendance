@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/lectures")
@@ -20,6 +21,16 @@ public class LectureController {
     @GetMapping
     public ResponseEntity<List<Lecture>> getAllLectures() {
         return ResponseEntity.ok(lectureService.getAllLectures());
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<Map<String, Object>> getActiveLecture() {
+        return ResponseEntity.ok(lectureService.getActiveLectureSession());
+    }
+
+    @PostMapping("/active")
+    public ResponseEntity<Map<String, Object>> setActiveLecture(@RequestBody Map<String, Object> sessionData) {
+        return ResponseEntity.ok(lectureService.setActiveLectureSession(sessionData));
     }
     
     @GetMapping("/teacher/{teacherId}")

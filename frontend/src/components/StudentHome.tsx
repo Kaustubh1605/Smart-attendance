@@ -245,14 +245,16 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               <span>BLE Beacon Active</span>
             </div>
 
-            {/* Verify Attendance Button */}
+            {/* PhonePe-Style QR Scanner Attendance Button */}
             <button
               onClick={onStartVerification}
               id="verifyBtn"
-              className="w-full bg-[#a0f399] text-[#005312] hover:bg-[#b5f9af] active:scale-[0.98] py-3.5 px-4 rounded-2xl font-bold text-[14px] transition-all flex items-center justify-center gap-2 z-10 cursor-pointer shadow-md"
+              className="w-full bg-gradient-to-r from-[#00c853] via-[#00e676] to-[#69f0ae] text-[#003300] hover:brightness-105 active:scale-[0.98] py-4 px-4 rounded-2xl font-black text-[14px] transition-all flex items-center justify-center gap-2.5 z-10 cursor-pointer shadow-[0_4px_20px_rgba(0,230,118,0.35)]"
             >
-              <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-              <span>Verify Attendance Now</span>
+              <div className="w-7 h-7 rounded-full bg-[#003300] flex items-center justify-center text-[#69f0ae]">
+                <span className="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+              </div>
+              <span>Open Scanner • Mark Attendance</span>
             </button>
           </div>
         </div>
