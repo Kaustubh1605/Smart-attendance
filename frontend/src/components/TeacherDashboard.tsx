@@ -333,34 +333,22 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const handleConfirmDelete = () => {
     if (!deletingLecture) return;
 
-    // Rule C: Active lecture cannot be directly deleted while live
+    // If lecture is active, automatically finalize live session first
     if (deletingLecture.status === 'active') {
-      setDeleteError('Active attendance session in progress. Please click "End Attendance" first before removing.');
-      return;
-    }
-
-    const hasAttendance = (deletingLecture.attendanceCount && deletingLecture.attendanceCount > 0) || deletingLecture.status === 'completed';
-
-    if (deleteMode === 'archive') {
-      if (onDeleteLecture) {
-        onDeleteLecture(deletingLecture.id, true, false);
+      if (onEndAttendance) {
+        onEndAttendance(deletingLecture.id);
       }
-      setDeletingLecture(null);
-      showToast('✓ Lecture archived from schedule successfully (attendance records preserved)');
-      return;
-    }
-
-    // Purge / Delete mode
-    if (hasAttendance && !confirmPurgeAttendance) {
-      setDeleteError('Please check the confirmation box to verify you want to permanently purge this lecture and all attendance records.');
-      return;
+      setSessionActive(false);
     }
 
     if (onDeleteLecture) {
-      onDeleteLecture(deletingLecture.id, false, true);
+      onDeleteLecture(deletingLecture.id, deleteMode === 'archive', true);
     }
+
+    const deletedName = deletingLecture.name;
     setDeletingLecture(null);
-    showToast(hasAttendance ? '✓ Lecture and associated attendance records deleted permanently' : '✓ Lecture deleted successfully');
+    setDeleteError(null);
+    showToast(`✓ Lecture "${deletedName}" deleted successfully`);
   };
 
   const handleCreateNewLecture = (e: React.FormEvent) => {
@@ -796,6 +784,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     <span>Resume Ingest</span>
                   </button>
                 )}
+
+                <button
+                  onClick={() => handleOpenDeleteLecture(currentLecture, 'purge')}
+                  className="px-3 py-2 rounded-xl font-bold text-[12px] bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  title="Delete this lecture session"
+                >
+                  <span className="material-symbols-outlined text-[17px] text-rose-600">delete</span>
+                  <span>Delete Lecture</span>
+                </button>
               </div>
             </div>
 
@@ -1260,6 +1257,19 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                             </span>
                           )}
 
+                          {/* Quick Delete Trash Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDeleteLecture(lec, 'purge');
+                            }}
+                            className="w-8 h-8 rounded-full hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
+                            title="Delete this lecture"
+                          >
+                            <span className="material-symbols-outlined text-[17px]">delete</span>
+                          </button>
+
                           {/* 3-Dot Action Menu Button */}
                           <div className="relative">
                             <button
@@ -1338,6 +1348,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                     >
                                       <span className="material-symbols-outlined text-[16px] text-[#ba1a1a]">stop_circle</span>
                                       <span>End Attendance</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        setOpenMenuLectureId(null);
+                                        handleOpenDeleteLecture(lec, 'purge');
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-[12px] font-bold text-[#ba1a1a] hover:bg-[#ffdad6]/40 flex items-center gap-2 transition-colors cursor-pointer"
+                                    >
+                                      <span className="material-symbols-outlined text-[16px] text-[#ba1a1a]">delete</span>
+                                      <span>Delete Lecture</span>
                                     </button>
                                   </>
                                 )}
@@ -1767,37 +1788,26 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 Cancel
               </button>
 
-              {deletingLecture.status !== 'active' ? (
-                <button
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className={`px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
-                    deleteMode === 'archive'
-                      ? 'bg-[#031635] text-white hover:bg-[#1a2b4b]'
-                      : 'bg-[#ba1a1a] text-white hover:bg-[#93000a]'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {deleteMode === 'archive' ? 'archive' : 'delete_forever'}
-                  </span>
-                  <span>
-                    {deleteMode === 'archive' ? 'Archive Lecture' : 'Delete Lecture & Attendance'}
-                  </span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onEndAttendance) onEndAttendance(deletingLecture.id);
-                    setDeletingLecture(null);
-                    showToast('✓ Attendance finalized. You can now delete or archive this lecture.');
-                  }}
-                  className="px-5 py-2.5 bg-[#ba1a1a] text-white hover:bg-[#93000a] rounded-xl font-bold text-[13px] transition-all cursor-pointer shadow-md flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[18px]">stop_circle</span>
-                  <span>End Session & Manage</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className={`px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all cursor-pointer shadow-md flex items-center gap-1.5 ${
+                  deleteMode === 'archive' && deletingLecture.status !== 'active'
+                    ? 'bg-[#031635] text-white hover:bg-[#1a2b4b]'
+                    : 'bg-[#ba1a1a] text-white hover:bg-[#93000a]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {deleteMode === 'archive' && deletingLecture.status !== 'active' ? 'archive' : 'delete_forever'}
+                </span>
+                <span>
+                  {deletingLecture.status === 'active'
+                    ? 'End Live Session & Delete Lecture'
+                    : deleteMode === 'archive'
+                    ? 'Archive Lecture'
+                    : 'Delete Lecture & Attendance'}
+                </span>
+              </button>
             </div>
           </div>
         </div>

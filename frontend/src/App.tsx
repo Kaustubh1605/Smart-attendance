@@ -328,6 +328,23 @@ export default function App() {
             }));
             setActiveLectureId(newLecture.id);
           }
+        } else if (data.type === 'LECTURE_DELETED') {
+          const { lectureId, lectureCode, remainingLectures, remainingSubjects, newActiveId } = data;
+          if (remainingLectures) {
+            setLectures(remainingLectures);
+          } else {
+            setLectures((prev) => prev.filter((l) => l.id !== lectureId));
+          }
+          if (remainingSubjects) {
+            setDynamicSubjects(remainingSubjects);
+          }
+          if (newActiveId) {
+            setActiveLectureId(newActiveId);
+          }
+          if (lectureCode) {
+            const codeUpper = (lectureCode as string).toUpperCase().trim();
+            setAttendanceHistory((prev) => prev.filter((r) => (r.lectureCode || '').toUpperCase().trim() !== codeUpper));
+          }
         } else if (data.type === 'SUBJECTS_UPDATED') {
           if (Array.isArray(data.subjects) && data.subjects.length > 0) {
             setDynamicSubjects(data.subjects);
@@ -488,9 +505,31 @@ export default function App() {
     };
   }, [activeLectureId]);
 
-  const activeLecture = lectures.find((l) => l.id === activeLectureId) || lectures[0];
+  const FALLBACK_DEFAULT_LECTURE: Lecture = {
+    id: 'lec-default',
+    code: 'BCA 301',
+    name: 'No Active Lecture',
+    className: 'BCA-A',
+    instructor: 'Faculty',
+    room: 'Room 204',
+    date: new Date().toISOString().slice(0, 10),
+    startTime: '10:00 AM',
+    endTime: '11:00 AM',
+    timeSlot: '10:00 AM – 11:00 AM',
+    duration: '1h',
+    status: 'upcoming',
+    attendanceCount: 0,
+    geofence: { lat: 19.9975, lng: 73.7898, radiusMeters: 30 },
+    bleBeaconId: 'BEACON-HALL-204-UUID',
+  };
+
+  const activeLecture = (lectures && lectures.length > 0)
+    ? (lectures.find((l) => l.id === activeLectureId) || lectures[0])
+    : FALLBACK_DEFAULT_LECTURE;
   const currentLectureStudents = lectureAttendanceMap[activeLectureId] || [];
-  const upcomingLectures = lectures.filter((l) => l.id !== activeLecture.id);
+  const upcomingLectures = (lectures && lectures.length > 0)
+    ? lectures.filter((l) => l.id !== activeLecture.id)
+    : [];
 
   const handleSelectLecture = (lecture: Lecture) => {
     setActiveLectureId(lecture.id);
@@ -611,78 +650,96 @@ export default function App() {
     const targetLecture = lectures.find((l) => l.id === lectureId);
     if (!targetLecture) return;
 
-    if (isArchive) {
-      setLectures((prev) =>
-        prev.map((l) => (l.id === lectureId ? { ...l, isArchived: true, status: 'completed' } : l))
-      );
-      const auditEntry: AuditLogEntry = {
-        id: generateUniqueId('aud'),
-        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
-        actor: 'prof.sharma@springfield.edu',
-        role: 'TEACHER',
-        action: 'LECTURE_ARCHIVED',
-        entity: 'Lecture',
-        entityId: lectureId,
-        previousState: 'COMPLETED_SCHEDULE',
-        newState: 'ARCHIVED (Attendance Preserved)',
-        reason: `Faculty archived lecture ${targetLecture.name}; historical attendance records preserved`,
-        ipAddress: '10.0.1.15'
-      };
-      setAuditLogs((prev) => [auditEntry, ...prev]);
-    } else {
-      // Permanently remove the lecture
-      setLectures((prev) => prev.filter((l) => l.id !== lectureId));
+    // Remaining lectures after deletion
+    const updatedLecs = lectures.filter((l) => l.id !== lectureId);
+    setLectures(updatedLecs);
 
-      // If deleteAttendance is true, purge the corresponding attendance history records
-      if (deleteAttendance) {
-        setLectureAttendanceMap((prev) => {
-          const next = { ...prev };
-          delete next[lectureId];
-          return next;
-        });
-        setAttendanceHistory((prev) =>
-          prev.filter((r) => r.lectureId !== lectureId && r.lectureCode !== targetLecture.code)
-        );
-        // Also recalculate subject attendance metrics for the student profile
-        setStudentData((prev) => {
-          const updatedSubjects = prev.subjectBreakdown.map((sub) => {
-            if (sub.code === targetLecture.code) {
-              const newTotal = Math.max(0, sub.totalLectures - 1);
-              const newPresent = Math.min(sub.present, newTotal);
-              const newPercentage = newTotal > 0 ? Math.round((newPresent / newTotal) * 100) : 0;
-              return { ...sub, totalLectures: newTotal, present: newPresent, percentage: newPercentage };
-            }
-            return sub;
-          });
-          const totalPresent = updatedSubjects.reduce((acc, s) => acc + s.present, 0);
-          const totalLectures = updatedSubjects.reduce((acc, s) => acc + s.totalLectures, 0);
-          const overall = totalLectures > 0 ? Math.round((totalPresent / totalLectures) * 100) : 0;
-          return { ...prev, subjectBreakdown: updatedSubjects, overallAttendance: overall };
-        });
-      }
-
-      if (activeLectureId === lectureId) {
-        const remaining = lectures.filter((l) => l.id !== lectureId);
-        if (remaining.length > 0) {
-          setActiveLectureId(remaining[0].id);
-        }
-      }
-
-      const auditEntry: AuditLogEntry = {
-        id: generateUniqueId('aud'),
-        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
-        actor: 'prof.sharma@springfield.edu',
-        role: 'TEACHER',
-        action: 'LECTURE_PERMANENTLY_DELETED',
-        entity: 'Lecture',
-        entityId: lectureId,
-        previousState: targetLecture.status.toUpperCase(),
-        newState: 'PERMANENTLY_DELETED',
-        reason: `Faculty permanently deleted lecture ${targetLecture.name} and associated attendance records`,
-        ipAddress: '10.0.1.15'
-      };
-      setAuditLogs((prev) => [auditEntry, ...prev]);
+    // If active lecture is being deleted, reassign activeLectureId to the next available lecture
+    let nextActiveId = activeLectureId;
+    if (activeLectureId === lectureId) {
+      nextActiveId = updatedLecs.length > 0 ? updatedLecs[0].id : '';
+      setActiveLectureId(nextActiveId);
     }
+
+    // Purge roster for this lecture
+    setLectureAttendanceMap((prev) => {
+      const next = { ...prev };
+      delete next[lectureId];
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY_ROSTER, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    // Purge attendance history records for this lecture/subject
+    const targetCode = (targetLecture.code || '').toUpperCase().trim();
+    const targetName = (targetLecture.name || '').toLowerCase().trim();
+    let updatedHistory = attendanceHistory;
+    if (deleteAttendance) {
+      updatedHistory = attendanceHistory.filter((r) => {
+        const rCode = (r.lectureCode || '').toUpperCase().trim();
+        const rName = (r.subjectName || '').toLowerCase().trim();
+        return rCode !== targetCode && rName !== targetName;
+      });
+      setAttendanceHistory(updatedHistory);
+    }
+
+    // Recompute dynamic subjects and remove any course that no longer exists in lectures or history
+    const updatedSubjects = computeDynamicSubjects(updatedLecs, updatedHistory).filter((sub) => {
+      const sCode = sub.code.toUpperCase().trim();
+      return (
+        updatedLecs.some((l) => (l.code || '').toUpperCase().trim() === sCode) ||
+        updatedHistory.some((r) => (r.lectureCode || '').toUpperCase().trim() === sCode)
+      );
+    });
+    setDynamicSubjects(updatedSubjects);
+
+    // Persist all updated stores to localStorage immediately
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_LECTURES, JSON.stringify(updatedLecs));
+      localStorage.setItem(LOCAL_STORAGE_KEY_ACTIVE_LEC, nextActiveId);
+      localStorage.setItem(LOCAL_STORAGE_KEY_HISTORY, JSON.stringify(updatedHistory));
+      localStorage.setItem(LOCAL_STORAGE_KEY_SUBJECTS, JSON.stringify(updatedSubjects));
+    } catch (e) {}
+
+    // Broadcast real-time cross-tab synchronization
+    try {
+      const channel = new BroadcastChannel('smartattend_channel');
+      channel.postMessage({
+        type: 'LECTURE_DELETED',
+        lectureId,
+        lectureCode: targetLecture.code,
+        remainingLectures: updatedLecs,
+        remainingSubjects: updatedSubjects,
+        newActiveId: nextActiveId,
+      });
+      channel.postMessage({
+        type: 'SUBJECTS_UPDATED',
+        subjects: updatedSubjects,
+      });
+      channel.close();
+    } catch (e) {}
+
+    // Delete from backend if backend is running
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/lectures/${lectureId}`, {
+      method: 'DELETE',
+    }).catch(() => {});
+
+    // Audit Log Entry
+    const auditEntry: AuditLogEntry = {
+      id: generateUniqueId('aud'),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+      actor: 'prof.sharma@springfield.edu',
+      role: 'TEACHER',
+      action: 'LECTURE_PERMANENTLY_DELETED',
+      entity: 'Lecture',
+      entityId: lectureId,
+      previousState: targetLecture.status.toUpperCase(),
+      newState: 'PERMANENTLY_DELETED',
+      reason: `Faculty permanently deleted lecture ${targetLecture.name} (${targetLecture.code}) from all portal rosters`,
+      ipAddress: '10.0.1.15',
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
   };
 
   const handleEndAttendance = (lectureId: string) => {
